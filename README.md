@@ -2,7 +2,7 @@
 
 This tool lets you create stubs for the 3rd-party referenced libraries used in your Silverlight projects.
 
-The main purpose is to make the migration from Silverlight to the web via CSHTML5 easier by allowing you to replace your Silverlight 3rd-party libraries with JavaScrip-based implementations while maintaining your original Silverlight code unchanged.
+The main purpose is to make the migration from Silverlight to the web via CSHTML5 easier by allowing you to replace your Silverlight 3rd-party libraries with JavaScript-based implementations while maintaining your original Silverlight code unchanged.
 
 For context and general information about the migration from Silverlight to the web via CSHTML5, please read [this page](http://cshtml5.com/links/migrate-silverlight-wpf-apps-to-html-javascript.aspx).
 
@@ -38,5 +38,13 @@ You can leave the other fields empty or with their default value for now.
 5. Click "Start" to generate the stubs. A message will appear indicating that the operation may take a few minutes.
 
 6. After the operation is completed, open the folder that you specified in the first field (for example, in the screenshot above, it is "c:\temp\Output"). You will find all your stubs there.
+
+Note: it is frequent that the stubs contain more classes than are actually needed by your application. This may be due for example to the fact that your application has style files (such as "TelerikStyleOverride.xaml" or "Resources\Themes\Telerik.Windows.Controls.xaml"), which reference some Telerik controls that you do not use in your application, or which you do not intend to migrate (usually the original Telerik styles are removed altogether because the controls are then implemented via equivalent 3rd-party libraries such as Kendo UI, which come with their own styles).
+
+To reduce the number of generated stubs to the strict minimum that is useful for the migration, we recommend you to remove the styles of the 3rd-party components, recompile your Silverlight application, and then re-run the Stub Generator. You may also want to manually strip out the code from the generated stubs that is not useful to get the migrated application to compile.
+
+
+For any questions, please contact CSHTML5 support ([link](http://cshtml5.com/contact.aspx)).
+
 
 
