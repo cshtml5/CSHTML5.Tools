@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.StubGenerator.App", "CSHTML5.Tools.StubGenerator.App\CSHTML5.Tools.StubGenerator.App.csproj", "{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.StubGenerator", "CSHTML5.Tools.StubGenerator\CSHTML5.Tools.StubGenerator.csproj", "{B484D8CC-27F8-4A70-9968-9DF1EC04600B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.AssemblyAnalysisCommon", "CSHTML5.Tools.AssemblyAnalysisCommon\CSHTML5.Tools.AssemblyAnalysisCommon.csproj", "{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
