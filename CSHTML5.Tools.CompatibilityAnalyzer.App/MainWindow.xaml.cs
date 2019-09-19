@@ -93,8 +93,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             try
             {
                 var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
-                string rootDotNetForHtml5Path = currentDirectory.Parent.Parent.Parent.FullName;
-                string path = System.IO.Path.Combine(rootDotNetForHtml5Path, @"BridgeNET\BridgeSupportedElements.xml");
+                //string rootDotNetForHtml5Path = currentDirectory.Parent.Parent.Parent.FullName;
+                string path = System.IO.Path.Combine(currentDirectory.FullName, @"Resources\BridgeSupportedElements.xml");
                 SupportedElementsPathTextBox.Text = path;
             }
             catch
