@@ -2,6 +2,7 @@
 using Mono.Collections.Generic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -1323,6 +1324,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon
             catch (AssemblyResolutionException)
             {
                 return GetTypeDefinitionFromModules(typeReference.FullName, modules);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
             }
 
             if (typeDefinition == null)
