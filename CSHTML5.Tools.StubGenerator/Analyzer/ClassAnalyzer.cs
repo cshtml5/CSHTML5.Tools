@@ -355,7 +355,7 @@ namespace StubGenerator.Common.Analyzer
                                 {
                                     _implementedInterfaces.Add(@interface.InterfaceType);
                                     AddUsing(interfaceTypeDefinition.Namespace);
-#if BRIDGE
+
                                     //isInterfaceRequired = true;
                                     _implementedInterfaces.Add(@interface.InterfaceType);
                                     foreach (MethodDefinition method in interfaceTypeDefinition.Methods)
@@ -366,13 +366,6 @@ namespace StubGenerator.Common.Analyzer
                                             res.Add(method.Name);
                                         }
                                     }
-#else
-                                    //isInterfaceRequired = true;
-                                    foreach (MethodDefinition method in interfaceTypeDefinition.Methods)
-                                    {
-                                        res.Add(method.Name);
-                                    }
-#endif
                                 }
                                 else
                                 {

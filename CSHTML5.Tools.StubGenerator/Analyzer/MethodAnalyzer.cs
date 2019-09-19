@@ -261,12 +261,8 @@ namespace StubGenerator.Common.Analyzer
                     }
                     else if (ClassAnalyzer.analyzeHelpher.IsTypeSupported(interfaceWhereMethodIsDefined))
                     {
-#if BRIDGE
                         //TODO : check if method is supported
                         isExplicitlyImplemented = true;
-#else
-                        isExplicitlyImplemented = true;
-#endif
                     }
                     else if (_unsupportedMethods.ContainsKey(interfaceAssemblyName))
                     {
