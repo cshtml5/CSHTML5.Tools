@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Diagnostics;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -162,14 +163,28 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             // Set "Wrap Text" on the columns 2, 3, and 5 (note: columns here are one-based):
             worksheet.Columns[2].WrapText = true;
             worksheet.Columns[3].WrapText = true;
-            worksheet.Columns[4].WrapText = true;
-            worksheet.Columns[5].WrapText = true;
+            try
+            {
+                worksheet.Columns[4].WrapText = true;
+                worksheet.Columns[5].WrapText = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
 
             // Vertical align the content of the cells:
             worksheet.Columns[2].VerticalAlignment = ExcelVAlign.VAlignTop;
             worksheet.Columns[3].VerticalAlignment = ExcelVAlign.VAlignTop;
-            worksheet.Columns[4].VerticalAlignment = ExcelVAlign.VAlignTop;
-            worksheet.Columns[5].VerticalAlignment = ExcelVAlign.VAlignTop;
+            try
+            {
+                worksheet.Columns[4].VerticalAlignment = ExcelVAlign.VAlignTop;
+                worksheet.Columns[5].VerticalAlignment = ExcelVAlign.VAlignTop;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
 
             // Saving the workbook to disk in XLSX format
             workbook.SaveAs(outputExcelFilePath);
