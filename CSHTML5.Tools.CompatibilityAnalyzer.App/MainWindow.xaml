@@ -1,7 +1,7 @@
 ﻿<Window x:Class="DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" SizeToContent="WidthAndHeight" MinWidth="500">
+        Title="MainWindow" SizeToContent="WidthAndHeight" MinWidth="500" MaxWidth="1000">
     <StackPanel Margin="10">
         <TextBlock Text="Output CSV file:" Margin="0,10,0,0"/>
         <TextBox x:Name="OutputCsvFilePathTextBox" Text="-- initialized in constructor --"/>
@@ -15,12 +15,15 @@
         <TextBlock Text="Path to the 'SupportedElements.xml' file:" Margin="0,10,0,0"/>
         <TextBox x:Name="SupportedElementsPathTextBox" Text="-- initialized in constructor --"/>
 
-        <TextBlock Text="Path to the 'Features and estimations.xlsx' file:" Margin="0,10,0,0"/>
-        <TextBox x:Name="FeaturesAndEstimationsPathTextBox" Text="-- initialized in constructor --"/>
-
         <TextBlock Text="Path to the folder that contains the Silverlight 'Mscorlib.dll' file:" Margin="0,10,0,0"/>
         <TextBox x:Name="MscorlibFolderPathTextBox" Text="-- initialized in constructor --"/>
 
-        <Button Content="Process file(s)..." HorizontalAlignment="Left" VerticalAlignment="Top" Padding="20,14" Click="Button_Click" Margin="0,10,0,0"/>
+        <TextBlock Text="(Optional) Path to the 'Features and estimations.xlsx' file:" Margin="0,10,0,0"/>
+        <TextBox x:Name="FeaturesAndEstimationsPathTextBox" Text="-- initialized in constructor --"/>
+
+        <TextBlock Text="(Optional) XAML files to ignore during the analysis (comma separated):" Margin="0,10,0,0"/>
+        <TextBox x:Name="XamlFilesToIgnoreTextBox" Text="-- initialized in constructor --" TextWrapping="Wrap"/>
+
+      <Button Content="Process file(s)..." HorizontalAlignment="Left" VerticalAlignment="Top" Padding="20,14" Click="Button_Click" Margin="0,10,0,0"/>
     </StackPanel>
 </Window>

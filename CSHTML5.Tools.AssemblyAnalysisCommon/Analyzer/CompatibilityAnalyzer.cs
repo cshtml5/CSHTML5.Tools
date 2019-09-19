@@ -87,8 +87,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                     foreach (DictionaryEntry resource in resourceReader)
                     {
                         var fileInfo = new FileInfo(resource.Key.ToString());
-                        var relativePath = new Uri(AppDomain.CurrentDomain.BaseDirectory).MakeRelativeUri(new Uri(fileInfo.FullName)).ToString();
-                        if(!ignoredFiles.Contains(relativePath))
+                        var fileNameWithRelativePath = new Uri(AppDomain.CurrentDomain.BaseDirectory).MakeRelativeUri(new Uri(fileInfo.FullName)).ToString();
+                        fileNameWithRelativePath = fileNameWithRelativePath.Replace('/', '\\');
+                        var fileNameWithoutPath = fileNameWithRelativePath.Substring(fileNameWithRelativePath.LastIndexOf('\\') + 1); // Removes the path of the file.
+                        if (!ignoredFiles.Contains(fileNameWithRelativePath.ToLower()) && !ignoredFiles.Contains(@"*\" + fileNameWithoutPath.ToLower()))
                         {
                             if (fileInfo.Extension.Equals(".xaml"))
                             {

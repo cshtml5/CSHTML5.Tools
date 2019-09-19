@@ -101,6 +101,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 SupportedElementsPathTextBox.Text = "";
             }
+
+            XamlFilesToIgnoreTextBox.Text = @"*\System.Windows.xaml, *\TelerikStyleOverride.xaml, *\Telerik.Windows.Controls.xaml, *\Telerik.Windows.Controls.Data.xaml, *\Telerik.Windows.Controls.Input.xaml, *\Telerik.Windows.Controls.Navigation.xaml, *\Telerik.Windows.Controls.DataVisualization.xaml, *\Telerik.Windows.Controls.Chart.xaml, *\Telerik.Windows.Controls.Diagrams.xaml, *\Telerik.Windows.Controls.Diagrams.Extensions.xaml, *\Telerik.Windows.Controls.Docking.xaml, *\Telerik.Windows.Controls.Expressions.xaml, *\Telerik.Windows.Controls.GanttView.xaml, *\Telerik.Windows.Controls.GridView.xaml, *\Telerik.Windows.Controls.ImageEditor.xaml, *\Telerik.Windows.Controls.RibbonView.xaml, *\Telerik.Windows.Controls.RichTextBoxUI.xaml, *\Telerik.Windows.Controls.ScheduleView.xaml, *\Telerik.Windows.Controls.Spreadsheet.xaml, *\Telerik.Windows.Documents.xaml, *\Telerik.Windows.Documents.Proofing.xaml";
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -108,6 +110,17 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string coreAssemblyPath = CoreAssemblyPathTextBox.Text;
             string supportedElementsPath = SupportedElementsPathTextBox.Text;
             string mscorlibFolderPath = MscorlibFolderPathTextBox.Text;
+
+            HashSet<string> xamlFilesToIgnore = null;
+            try
+            {
+                xamlFilesToIgnore = new HashSet<string>(XamlFilesToIgnoreTextBox.Text.Split(',').Select(s => s.Trim().ToLower()));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Invalid list of XAML files to exclude." + Environment.NewLine + Environment.NewLine + ex.ToString());
+                return;
+            }
 
             if (string.IsNullOrEmpty(coreAssemblyPath)
                 || string.IsNullOrEmpty(supportedElementsPath)
@@ -177,11 +190,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             fileNames,
                             Configuration.UrlNamespacesThatBelongToUserCode,
                             Configuration.AttributesToIgnoreInXamlBecauseTheyAreFromBaseClasses,
-                            new HashSet<string>(), //List of files to ignore
+                            xamlFilesToIgnore,
                             supportedElementsPath,
                             mscorlibFolderPath,
                             skipTypesWhereNoMethodIsActuallyCalled: true,
-                            additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies);
+                            additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies); ;
                     }
                 }
                 catch (Exception ex)
@@ -483,7 +496,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 }
                 className = className.Replace("`1", "").Replace("`2", "").Replace("`3", "").Replace("`4", "").Replace("`5", "").Replace("`6", "");
                 if (className.Contains("."))
-                    className = className.Substring(0, className.IndexOf("."));
+                    className = className.Substring(0, className.LastIndexOf("."));
 
 #if FULL_PATH_OUTPUT
                     string location = unsupportedMethod.UserAssemblyName + "/.../" + className + ext;
