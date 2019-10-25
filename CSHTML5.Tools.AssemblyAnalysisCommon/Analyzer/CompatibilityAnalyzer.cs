@@ -26,12 +26,14 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             HashSet<string> listOfFilesToIgnore,
             string supportedElementsPath,
             string mscorlibFolderPath,
+            string sdkFolderPath,
+            string otherFoldersPath,
             bool skipTypesWhereNoMethodIsActuallyCalled,
             bool addBothPropertyAndEventWhenNotFound = false,
             string additionalFolderWhereToResolveAssemblies = null)
         {
             _coreSupportedMethods = coreSupportedMethods;
-            AssemblyDefinition assembly = LoadAssembly(path, mscorlibFolderPath, additionalFolderWhereToResolveAssemblies);
+            AssemblyDefinition assembly = LoadAssembly(path, mscorlibFolderPath, sdkFolderPath, otherFoldersPath, additionalFolderWhereToResolveAssemblies);
             AssemblyDefinition[] assemblies = new AssemblyDefinition[] { assembly };
 
             HashSet<string> userAssembliesNamesLowercase = new HashSet<string>();
@@ -775,7 +777,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             return unsupportedTypes;
         }
         #endregion
-        public static AssemblyDefinition LoadAssembly(string path, string mscorlibFolderPath = null, string additionalFolderWhereToResolveAssemblies = null)
+        public static AssemblyDefinition LoadAssembly(string path, string mscorlibFolderPath = null, string sdkFolderPath = null, string otherFoldersPath = null, string additionalFolderWhereToResolveAssemblies = null)
         {
             if (String.IsNullOrWhiteSpace(path))
                 throw new InvalidDataException("Assembly path was empty.");
@@ -789,6 +791,22 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             // Tell the resolver to look for referenced Mscorlib and other framework assemblies in the "mscorlibFolderPath" directory:
             if (!string.IsNullOrEmpty(mscorlibFolderPath))
                 resolver.AddSearchDirectory(mscorlibFolderPath);
+
+            // Tell the resolver to look for other framework assemblies in the "sdkFolderPath" directory:
+            if (!string.IsNullOrEmpty(sdkFolderPath))
+                resolver.AddSearchDirectory(sdkFolderPath);
+
+            // Tell the resolver to look for other assemblies in the "otherFoldersPath" directory:
+            if (!string.IsNullOrWhiteSpace(otherFoldersPath))
+            {
+                foreach (string p in otherFoldersPath.Split(','))
+                {
+                    if (!string.IsNullOrWhiteSpace(p))
+                    {
+                        resolver.AddSearchDirectory(p);
+                    }
+                }
+            }
 
             // Tell the resolver to look for referenced assemblies in the specified additional location:
             if (!string.IsNullOrEmpty(additionalFolderWhereToResolveAssemblies))

@@ -53,6 +53,8 @@ namespace StubGenerator.Common
                     Configuration.ExcludedFiles,
                     Configuration.supportedElementsPath,
                     Configuration.mscorlibFolderPath,
+                    Configuration.sdkFolderPath,
+                    "",
                     skipTypesWhereNoMethodIsActuallyCalled: false,
                     addBothPropertyAndEventWhenNotFound: true,
                     additionalFolderWhereToResolveAssemblies: Configuration.ReferencedAssembliesFolderPath);

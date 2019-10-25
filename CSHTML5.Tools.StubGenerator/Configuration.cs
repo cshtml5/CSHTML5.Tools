@@ -59,6 +59,9 @@ namespace StubGenerator.Common
         // Path of mscorlib assembly
         internal static string mscorlibFolderPath = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0";
 
+        // Path of SDK folder
+        internal static string sdkFolderPath = @"C:\Program Files (x86)\Microsoft SDKs\Silverlight\v5.0\Libraries\Client";
+
         // Path of folder containing the assemblies we want to analyze
         ////OSMRP1
         internal static string assembliesToAnalyzePath = "";

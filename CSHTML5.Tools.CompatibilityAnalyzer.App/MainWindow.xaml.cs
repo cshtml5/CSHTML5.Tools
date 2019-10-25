@@ -21,6 +21,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CSHTML5.Tools.CompatibilityAnalyzer.App.Properties;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -90,6 +91,14 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             MscorlibFolderPathTextBox.Text =
                 System.IO.Path.Combine(GetProgramFilesX86Path(), @"Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\");
 
+            // Initialize the path that contains the Silverlight SDK:
+            SDKFolderPathTextBox.Text =
+                System.IO.Path.Combine(GetProgramFilesX86Path(), @"Microsoft SDKs\Silverlight\v5.0\Libraries\Client");
+
+            // Reload the previous value of the "other paths" field:
+            if (Settings.Default.OtherFoldersPath != null)
+                OtherFoldersPathTextBox.Text = Settings.Default.OtherFoldersPath;
+
             try
             {
                 var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -110,6 +119,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string coreAssemblyPath = CoreAssemblyPathTextBox.Text;
             string supportedElementsPath = SupportedElementsPathTextBox.Text;
             string mscorlibFolderPath = MscorlibFolderPathTextBox.Text;
+            string sdkFolderPath = SDKFolderPathTextBox.Text;
+            string otherFoldersPath = OtherFoldersPathTextBox.Text;
 
             HashSet<string> xamlFilesToIgnore = null;
             try
@@ -137,6 +148,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             }
 
             var featuresAndEstimationsFileProcessor = new FeaturesAndEstimationsFileProcessor(FeaturesAndEstimationsPathTextBox.Text);
+
+            // Save the content of the "OtherFoldersPathTextBox" for reuse when relaunching the application:
+            Settings.Default.OtherFoldersPath = OtherFoldersPathTextBox.Text;
+            Settings.Default.Save();
 
 #if ASK_USER_TO_CHOOSE_ASSEMBLIES_TO_ANALYZE
             // Create OpenFileDialog 
@@ -193,6 +208,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             xamlFilesToIgnore,
                             supportedElementsPath,
                             mscorlibFolderPath,
+                            sdkFolderPath,
+                            otherFoldersPath,
                             skipTypesWhereNoMethodIsActuallyCalled: true,
                             additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies); ;
                     }
