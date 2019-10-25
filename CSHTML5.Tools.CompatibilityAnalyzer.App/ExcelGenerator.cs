@@ -42,16 +42,14 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             PrepareTheStyles(workbook, out style_Remove, out style_EasyWorkaround, out style_RequiresImplementation, out style_NonTrivialWorkaround);
 
             // Set the header text:
-            worksheet.Range[15, 3].Text = "MISSING FEATURE:";
-            worksheet.Range[15, 4].Text = "CLASSES OR FILES WHERE THE FEATURE IS USED:";
-            worksheet.Range[15, 5].Text = "RECOMMENDED ACTION";
-            worksheet.Range[15, 6].Text = "WORKLOAD (number of days of work):";
+            worksheet.Range[5, 3].Text = "FEATURE:";
+            worksheet.Range[5, 4].Text = "CLASSES OR FILES WHERE THE FEATURE IS USED:";
 
             // Set the header format:
-            worksheet.Range[15, 3, 15, 6].CellStyle.Font.Bold = true;
+            worksheet.Range[5, 3, 5, 6].CellStyle.Font.Bold = true;
 
             // Index of the first row that contains the feature:
-            int currentRow = 17;
+            int currentRow = 7;
 
             var groupedResult = unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed.GroupBy((element) => element.Key.Item2);
             foreach (IGrouping<string, KeyValuePair<Tuple<string, string>, HashSet<string>>> item in groupedResult)
