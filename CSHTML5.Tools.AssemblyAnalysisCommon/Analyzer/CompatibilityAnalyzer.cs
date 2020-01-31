@@ -17,22 +17,21 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
         public static void Analyze(
             string path,
-            ILogger logger,
             List<UnsupportedMethodInfo> outputListOfUnsupportedMethods,
-            CoreSupportedMethodsContainer coreSupportedMethods,
-            string[] inputAssemblies,
+            AnalyzeHelper analyzeHelper,
+            HashSet<string> inputAssemblies,
             HashSet<string> urlNamespacesThatBelongToUserCode,
             HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses,
             HashSet<string> listOfFilesToIgnore,
-            string supportedElementsPath,
             string mscorlibFolderPath,
             string sdkFolderPath,
             string otherFoldersPath,
+            string supportedElementsPath,
             bool skipTypesWhereNoMethodIsActuallyCalled,
             bool addBothPropertyAndEventWhenNotFound = false,
             string additionalFolderWhereToResolveAssemblies = null)
         {
-            _coreSupportedMethods = coreSupportedMethods;
+            _coreSupportedMethods = analyzeHelper.CoreSupportedMethods;
             AssemblyDefinition assembly = LoadAssembly(path, mscorlibFolderPath, sdkFolderPath, otherFoldersPath, additionalFolderWhereToResolveAssemblies);
             AssemblyDefinition[] assemblies = new AssemblyDefinition[] { assembly };
 
@@ -51,18 +50,16 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             //--------------------------------------------
             // CHECK FOR UNSUPPORTED METHODS:
             //--------------------------------------------
-            AnalyzeHelper analyzeHelper = new AnalyzeHelper();
-            analyzeHelper.Initialize(coreSupportedMethods, supportedElementsPath);
 
             //look if we find methods that are not supported in the xaml files:
-            CheckXamlFiles(inputAssemblies, userAssembliesNamesLowercase, coreSupportedMethods, attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, listOfFilesToIgnore, supportedElementsPath, addBothPropertyAndEventWhenNotFound,
+            CheckXamlFiles(inputAssemblies, userAssembliesNamesLowercase, analyzeHelper, attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, listOfFilesToIgnore, supportedElementsPath, addBothPropertyAndEventWhenNotFound,
                 whatToDoWhenNotSupportedMethodFound: (unsupportedMethodInfo) =>
                 {
                     outputListOfUnsupportedMethods.Add(unsupportedMethodInfo);
                 });
 
             //look in C# files:
-            Check(assemblies, userAssembliesNamesLowercase, analyzeHelper, listOfFilesToIgnore, "", coreSupportedMethods,
+            Check(assemblies, userAssembliesNamesLowercase, analyzeHelper, listOfFilesToIgnore, "", analyzeHelper.CoreSupportedMethods,
                 skipTypesWhereNoMethodIsActuallyCalled: skipTypesWhereNoMethodIsActuallyCalled,
                 whatToDoWhenNotSupportedMethodFound: (unsupportedMethodInfo) =>
                 {
@@ -72,12 +69,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
 
         #region checking Xaml
-        public static void CheckXamlFiles(string[] inputAssemblies, HashSet<string> userAssembliesNamesLowercase, CoreSupportedMethodsContainer coreSupportedMethods, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
+        public static void CheckXamlFiles(HashSet<string> inputAssemblies, HashSet<string> userAssembliesNamesLowercase, AnalyzeHelper analyzeHelper, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
         {
             HashSet<string> errorsAlreadyRaised = new HashSet<string>(); // This prevents raising multiple times the same error.
-
-            AnalyzeHelper analyzeHelper = new AnalyzeHelper();
-            analyzeHelper.Initialize(coreSupportedMethods, supportedElementsPath);
 
             foreach (string assemblyPath in inputAssemblies)
             {
@@ -601,6 +595,18 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         }
 
         #region checking C#
+        
+        /// <summary>
+        /// Check in analyzed dll for unsupported stuff
+        /// </summary>
+        /// <param name="assembliesDefinitions"></param>
+        /// <param name="userAssembliesNamesLowercase"></param>
+        /// <param name="analyzeHelper"></param>
+        /// <param name="ignoredFiles"></param>
+        /// <param name="nameOfAssembliesThatDoNotContainUserCode"></param>
+        /// <param name="coreSupportedMethods"></param>
+        /// <param name="skipTypesWhereNoMethodIsActuallyCalled"></param>
+        /// <param name="whatToDoWhenNotSupportedMethodFound"></param>
         public static void Check(AssemblyDefinition[] assembliesDefinitions, HashSet<string> userAssembliesNamesLowercase, AnalyzeHelper analyzeHelper, HashSet<string> ignoredFiles, string nameOfAssembliesThatDoNotContainUserCode, CoreSupportedMethodsContainer coreSupportedMethods, bool skipTypesWhereNoMethodIsActuallyCalled, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
         {
             //try to see if there is a way to ignore .cs file.
@@ -618,7 +624,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                     TypeReference baseType = type.BaseType;
                     if (baseType != null)
                     {
-                        if (!analyzeHelper._coreSupportedMethods.ContainsType(baseType.Name, baseType.Namespace))
+                        if (!analyzeHelper.CoreSupportedMethods.ContainsType(baseType.Name, baseType.Namespace))
                         {
                             if (!analyzeHelper.IsTypeSupported(baseType))
                             {
@@ -652,7 +658,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                                         && !userAssembliesNamesLowercase.Contains(assemblyWhereMethodIsOriginallyDefined.ToLowerInvariant() + ".dll"))
                                     {
                                         string fullMethodName = methodAsInitiallyDeclaredInParentType.DeclaringType.Namespace + "." + methodAsInitiallyDeclaredInParentType.DeclaringType.Name + "." + methodAsInitiallyDeclaredInParentType.Name;
-                                        if (!analyzeHelper._coreSupportedMethods.Contains(methodAsInitiallyDeclaredInParentType.DeclaringType.Namespace, methodAsInitiallyDeclaredInParentType.DeclaringType.Name, methodAsInitiallyDeclaredInParentType.Name))
+                                        if (!analyzeHelper.CoreSupportedMethods.Contains(methodAsInitiallyDeclaredInParentType.DeclaringType.Namespace, methodAsInitiallyDeclaredInParentType.DeclaringType.Name, methodAsInitiallyDeclaredInParentType.Name))
                                         {
                                             if (!analyzeHelper.IsMethodSupported(methodAsInitiallyDeclaredInParentType))
                                             {
@@ -692,7 +698,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             {
                                 //if (!errorsAlreadyRaised.Contains(fullMethodName)) //if the error was raised already, do nothing
                                 //{
-                                if (!analyzeHelper._coreSupportedMethods.Contains(declaringType.Namespace, declaringTypeName, methodName))
+                                if (!analyzeHelper.CoreSupportedMethods.Contains(declaringType.Namespace, declaringTypeName, methodName))
                                 {
                                     //we couldn't find the method, we try to look somewhere else (in supportedElements basically)
                                     if (!analyzeHelper.IsMethodSupported(referencedMethodAndCorrespondingInstruction.MemberReference))
@@ -754,7 +760,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         public static HashSet<TypeReference> AnalyzeSignature(MethodDefinition method, AnalyzeHelper analyzeHelper)
         {
             HashSet<TypeReference> unsupportedTypes = new HashSet<TypeReference>();
-            if (!analyzeHelper._coreSupportedMethods.ContainsType(method.ReturnType.Name, method.ReturnType.Namespace))
+            if (!analyzeHelper.CoreSupportedMethods.ContainsType(method.ReturnType.Name, method.ReturnType.Namespace))
             {
                 if (!analyzeHelper.IsTypeSupported(method.ReturnType))
                 {
@@ -765,7 +771,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 foreach (ParameterDefinition param in method.Parameters)
                 {
-                    if (!analyzeHelper._coreSupportedMethods.ContainsType(param.ParameterType.Name, param.ParameterType.Namespace))
+                    if (!analyzeHelper.CoreSupportedMethods.ContainsType(param.ParameterType.Name, param.ParameterType.Namespace))
                     {
                         if (!analyzeHelper.IsTypeSupported(param.ParameterType))
                         {
@@ -777,6 +783,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             return unsupportedTypes;
         }
         #endregion
+        
         public static AssemblyDefinition LoadAssembly(string path, string mscorlibFolderPath = null, string sdkFolderPath = null, string otherFoldersPath = null, string additionalFolderWhereToResolveAssemblies = null)
         {
             if (String.IsNullOrWhiteSpace(path))

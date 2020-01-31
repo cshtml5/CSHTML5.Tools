@@ -1,0 +1,143 @@
+﻿<Window x:Class="DotNetForHtml5.PrivateTools.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Width="800"
+        SizeToContent="Height"
+        ResizeMode="CanMinimize"
+        Title="Stub Generator - CSHTML5 Tools"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="Output location:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a folder..." Padding="5, 2, 5, 2" Click="ButtonGeneratedFilesFolderClick"/>
+            <TextBox x:Name="GeneratedFilesFolderPath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="Referenced assemblies location:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a folder..." Padding="5, 2, 5, 2" Click="ButtonReferencedAssembliesFolderClick"/>
+            <TextBox x:Name="ReferencedAssembliesFolderPath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="2" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="Analyzed assemblies location:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a folder..." Padding="5, 2, 5, 2" Click="ButtonAssembliesToAnalyzeFolderClick"/>
+            <TextBox x:Name="AssembliesToAnalyzeFolderPath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="3" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="Folder where mscorlib.dll is located:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a folder..." Padding="5, 2, 5, 2" Click="ButtonMscorlibFolderClick"/>
+            <TextBox x:Name="MscorlibFolderPath" Grid.Row="1" Grid.Column="1" Text="C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0"/>
+        </Grid>
+        <Grid Grid.Row="4" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="(Optional) Location of the XML file where additionnal methods to generate can be added:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a file..." Padding="5, 2, 5, 2" Click="ButtonUndetectedMethodXMLFileClick"/>
+            <TextBox x:Name="UndetectedMethodXMLFilePath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="5" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="(Optional) Location of the XML file where additionnal code to generate is written:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a file..." Padding="5, 2, 5, 2" Click="ButtonAdditionnalCodeXMLFileClick"/>
+            <TextBox x:Name="AdditionnalCodeXMLFilePath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="6" Margin="0,10,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Padding="2" Text="(Optional) Location of the XML file containing a list of files to ignore:" FontSize="14"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="Pick a file..." Padding="5, 2, 5, 2" Click="ButtonIgnoredFilesXMLFileClick"/>
+            <TextBox x:Name="IgnoredFilesXMLFilePath" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <Grid Grid.Row="7" Margin="0,10,0,0" HorizontalAlignment="Left">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Padding="2" Text="Product:"/>
+            <ComboBox x:Name="SelectedProduct" Grid.Row="1" SelectedIndex="0">
+                <ComboBoxItem Content="OpenSilver" Tag="OpenSilver"/>
+                <ComboBoxItem Content="CSHTML5 2.x" Tag="CSHTML5v2"/>
+                <ComboBoxItem Content="CSHTML5 1.x" Tag="CSHTML5"/>
+            </ComboBox>
+        </Grid>
+        <Grid Grid.Row="8" Margin="0,10,0,0" >
+            <Button Content="Configure options" Click="ConfigureOptionsButtonClick" Padding="10,6" HorizontalAlignment="Left"/>
+        </Grid>
+        <Grid Grid.Row="9" Margin="0,10,0,0" HorizontalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Start" Click="StartButtonClick" Padding="10,6"/>
+            <Button Grid.Column="1" Content="Cancel" Click="CancelButtonClick" Margin="10,0,0,0" Padding="10,6"/>
+        </Grid>
+        <Border x:Name="PleaseWaitContainer" Background="White" Grid.RowSpan="10" Visibility="Collapsed">
+            <TextBlock Text="Please wait. This operation may take several minutes...." FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</Window>

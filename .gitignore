@@ -341,3 +341,8 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Default folder to run analysis
+ToAnalyze/input/*
+ToAnalyze/output/*
+ToAnalyze/references/*

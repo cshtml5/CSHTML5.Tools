@@ -1,10 +1,6 @@
 ﻿using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
 using Mono.Cecil;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {

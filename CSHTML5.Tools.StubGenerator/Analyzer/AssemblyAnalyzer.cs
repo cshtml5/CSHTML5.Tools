@@ -1,11 +1,7 @@
 ﻿using DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer;
 using Mono.Cecil;
 using StubGenerator.Common.Options;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StubGenerator.Common.Analyzer
 {
@@ -15,42 +11,21 @@ namespace StubGenerator.Common.Analyzer
         private Dictionary<string, Dictionary<string, HashSet<string>>> _unsupportedMethods { get; set; }
         private Dictionary<string, HashSet<string>> _unsupportedMethodsInCurrentAssembly { get; set; }
         private List<ModuleDefinition> _modules;
-        private bool _isInitialized = false;
 
         public ClassAnalyzer ClassAnalyzer { get; set; }
 
         public AssemblyDefinition Assembly { get; set; }
 
-        internal AssemblyAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions)
-        {
-            Init(unsupportedMethods, modules, outputOptions);
-        }
-
-        /// <summary>
-        /// Initialize the AssemblyAnalyzer. Must be call once (and only once).
-        /// </summary>
         /// <param name="unsupportedMethods"></param>
         /// <param name="modules"></param>
         /// <param name="outputOptions"></param>
-        private void Init(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
+        internal AssemblyAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, AnalyzeHelper analyzeHelper, List<ModuleDefinition> modules, OutputOptions outputOptions)
         {
-            if (!_isInitialized)
-            {
-                if (outputOptions == null)
-                {
-                    _outputOptions = new OutputOptions();
-                }
-                else
-                {
-                    _outputOptions = outputOptions;
-                }
+            _outputOptions = outputOptions;
 
-                _unsupportedMethods = unsupportedMethods;
-                _modules = modules;
-                ClassAnalyzer = new ClassAnalyzer(_unsupportedMethods, _modules, _outputOptions);
-
-                _isInitialized = true;
-            }
+            _unsupportedMethods = unsupportedMethods;
+            _modules = modules;
+            ClassAnalyzer = new ClassAnalyzer(_unsupportedMethods, analyzeHelper, _modules, _outputOptions);
         }
 
         private bool CanWorkOnAssembly()
@@ -74,11 +49,6 @@ namespace StubGenerator.Common.Analyzer
         /// </summary>
         public void Run()
         {
-            if (!_isInitialized)
-            {
-                throw new Exception("AssemblyAnalyzer must be initialized. Please Call Init() first.");
-            }
-
             foreach (TypeDefinition type in Assembly.MainModule.Types)
             {
                 HashSet<string> unsupportedMethodsInCurrentType;

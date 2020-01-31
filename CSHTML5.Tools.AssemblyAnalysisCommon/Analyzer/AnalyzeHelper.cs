@@ -1,43 +1,108 @@
-﻿using Mono.Cecil;
+﻿using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Xml.Linq;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
     public class AnalyzeHelper
     {
-        const string CommonLanguageRuntimeLibrary = "CommonLanguageRuntimeLibrary";
-        const string Mscorlib = "mscorlib";
-        const string Netstandard = "netstandard";
-        const string System = "System";
-        const string ErrorLocationString = "  (Error location: \"{0}\" in assembly \"{1}\")";
-        const string ExplanationWhenUnsupported = "The method \"{0}\" is not yet supported. You can see the list of supported methods at: http://www.cshtml5.com/links/what-is-supported.aspx  - You can learn how to implement missing methods at: http://www.cshtml5.com/mscorlib.aspx - For assistance, please send an email to: support@cshtml5.com";
-
+        private const string CommonLanguageRuntimeLibrary = "CommonLanguageRuntimeLibrary";
+        private const string Mscorlib = "mscorlib";
+        private const string Netstandard = "netstandard";
+        private const string System = "System";
 
         Dictionary<string, HashSet<string>> _supportedMscorlibMethods = new Dictionary<string, HashSet<string>>();
-        public CoreSupportedMethodsContainer _coreSupportedMethods;
-        public bool _initialized = false;
+        public CoreSupportedMethodsContainer CoreSupportedMethods;
 
-        public void Initialize(CoreSupportedMethodsContainer coreSupportedMethods, string supportedElementsPath)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="coreSupportedMethods">Methods and classes supported by the currently selected product</param>
+        /// <param name="mscorlibImpInfoFile">Path to the dll or xml file containing informations about what is supported from mscorlib</param>
+        public AnalyzeHelper(CoreSupportedMethodsContainer coreSupportedMethods, string mscorlibImpInfoFile)
         {
-            _coreSupportedMethods = coreSupportedMethods;
+            CoreSupportedMethods = coreSupportedMethods;
 
-            // Add additional supported methods that are not defined in the proxies (such as "Int32.Parse"):
-            foreach (Tuple<string, List<string>> typeToMethods in GetSupportedMethods(supportedElementsPath))
+            // WTF WHY IS THIS BLOCK BELLOW NEVER USED PLEASE SOMEONE HELP ME
+            
+            // List<Tuple<string, List<string>>> supportedMethods = GetSupportedMethods(mscorlibImpInfoFile);
+            //
+            // // Add additional supported methods that are not defined in the proxies (such as "Int32.Parse"):
+            // foreach (Tuple<string, List<string>> typeToMethods in supportedMethods)
+            // {
+            //     HashSet<string> typeMethods = GetReferenceToListOfSupportedMethodsForAGivenTypeName(typeToMethods.Item1);
+            //     foreach (string methodName in typeToMethods.Item2)
+            //     {
+            //         typeMethods.Add(methodName);
+            //     }
+            // }
+        }
+
+        /// <summary>
+        /// Get the supported mscorlib methods and classes from a XML or DLL file
+        /// </summary>
+        /// <param name="mscorlibImpInfoFile">Path to the file from which we retrieve the supported methods and classes</param>
+        /// <returns>Returns a List of the supported methods and classes</returns>
+        internal static List<Tuple<string, List<string>>> GetSupportedMethods(string mscorlibImpInfoFile)
+        {
+            if (Path.GetExtension(mscorlibImpInfoFile)?.ToLower() == ".dll")
+                return GetSupportedMethodsFromDLL(mscorlibImpInfoFile);
+            
+            if (Path.GetExtension(mscorlibImpInfoFile)?.ToLower() == ".xml")
+                return GetSupportedMethodsFromXML(mscorlibImpInfoFile);
+            
+            throw new ArgumentException($"This extension is not recognized: {Path.GetExtension(mscorlibImpInfoFile)}");
+        }
+
+        internal static List<Tuple<string, List<string>>> GetSupportedMethodsFromDLL(string mscorlibImpInfoFile)
+        {
+            return new List<Tuple<string, List<string>>>();
+        }
+        
+        /// <summary>
+        /// Reads SupportedElements.xml and returns a List&lt;Tuple&lt;string, List&lt;string&gt;&gt;&gt; that contains the supported methods defined in SupportedElements.xml, per type.
+        /// </summary>
+        /// <returns>A List&lt;Tuple&lt;string, List&lt;string&gt;&gt;&gt; that contains the supported methods defined in SupportedElements.xml, per type.</returns>
+        internal static List<Tuple<string, List<string>>> GetSupportedMethodsFromXML(string mscorlibImplInfoPath)
+        {
+            List<Tuple<string, List<string>>> result = null;
+
+            // Load the XML file located in the Compiler directory:
+            XDocument xdoc;
+            try
             {
-                HashSet<string> typeMethods = GetReferenceToListOfSupportedMethodsForAGivenTypeName(typeToMethods.Item1);
-                foreach (string methodName in typeToMethods.Item2)
-                {
-                    typeMethods.Add(methodName);
-                }
+                //var xmlFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SupportedElements.xml");
+                //if (!File.Exists(xmlFilePath)) // We also look in the parent folder because we may be in a subfolder of the Compiler folder (such as the "SLMigration" folder).
+                //    xmlFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"..\SupportedElements.xml");
+
+                Console.WriteLine(mscorlibImplInfoPath);
+                xdoc = XDocument.Load(mscorlibImplInfoPath);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Unable to load the file that contains the list of supported methods (SupportedElements.xml). Please contact support at support@cshtml5.com" + Environment.NewLine + Environment.NewLine + ex.ToString());
             }
 
-            _initialized = true;
+            // Query the document:
+            try
+            {
+                result = (from type in xdoc.Root.Descendants("Type")
+                          select new Tuple<string, List<string>>(
+                              type.Attribute("Name").Value,
+                              (from member in type.Elements("Member")
+                               select member.Attribute("Name").Value).ToList())).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while parsing the file that contains the list of supported methods. Please contact support at support@cshtml5.com" + Environment.NewLine + Environment.NewLine + ex.ToString());
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -55,6 +120,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         /// </param>
         /// <param name="lineNumber">The line at which the method was found in the file.</param>
         /// <param name="assemblyName">The name of the Assembly that should contain the type.</param>
+        /// <param name="namespace"></param>
         /// <param name="methodName">The method Name</param>
         /// <param name="typeName">The name of the type where the method is defined</param>
         /// <param name="callingMethodFullName">(We put the file name here as well)</param>
@@ -66,16 +132,12 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         /// <returns>A boolean saying if the method was supported. This is useful when we want to check multiple name possibilities for a single method (see parameter addUnsupportedMethod).</returns>
         internal bool CheckMethodValidity(HashSet<string> userAssembliesNamesLowercase, string fileName, string userAssemblyName, HashSet<string> errorsAlreadyRaised, int lineNumber, string assemblyName, string @namespace, string methodName, string typeName, string callingMethodFullName, bool addUnsupportedMethod, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
         {
-            if (!_initialized)
-            {
-                throw new Exception("You need to initialize the AnalyzeHelper first");
-            }
             //we assume it's ok in the case where the method was defined in one of the user's assemblies:
             if (!userAssembliesNamesLowercase.Contains(assemblyName.ToLowerInvariant())
                 && !userAssembliesNamesLowercase.Contains(assemblyName.ToLowerInvariant() + ".dll"))
             {
                 string fullMethodName = @namespace + "." + typeName +"." + methodName;
-                if (!_coreSupportedMethods.Contains(@namespace, typeName, methodName))//if the core does not contain the definition for the method:
+                if (!CoreSupportedMethods.Contains(@namespace, typeName, methodName))//if the core does not contain the definition for the method:
                 {
                     if (!errorsAlreadyRaised.Contains(fullMethodName))//if that same error was not raised yet
                     {
@@ -110,10 +172,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         }
 
         /// <summary>
-        /// Loops through all methods of all types defined in the assembly and returns them as <typeparamref name="Mono.Cecil.MethodDefinition"/>.
+        /// Loops through all methods of all types defined in the assembly and returns them as <see cref="MethodDefinition"/>.
         /// </summary>
         /// <param name="assemblyDefinition">The assembly in which to look for the methods.</param>
-        /// <returns>An IEnumerable&lt;<typeparamref name="Mono.Cecil.MethodDefinition"/>&gt; that contains all methods defined in the assembly.</returns>
+        /// <returns>An <see cref="IEnumerable"/> of <see cref="MethodDefinition"/> that contains all methods defined in the assembly.</returns>
         public static IEnumerable<MethodDefinition> GetAllMethodsDefinedInAssembly(AssemblyDefinition assemblyDefinition)
         {
             // Iterate through all the members:
@@ -126,6 +188,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             }       
         }
 
+        /// <summary>
+        /// Loops through all types defined in the assembly and returns them as <see cref="TypeDefinition"/>.
+        /// </summary>
+        /// <param name="assemblyDefinition">The assembly in which to look for the types.</param>
+        /// <returns>An <see cref="IEnumerable"/> of <see cref="TypeDefinition"/> that contains all types defined in the assembly.</returns>
         public static IEnumerable<TypeDefinition> GetAllTypesDefinedInAssembly(AssemblyDefinition assemblyDefinition)
         {
             foreach (ModuleDefinition module in assemblyDefinition.Modules)
@@ -136,26 +203,30 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 }
             }
         }
-
         
-
+        /// <summary>
+        /// Loops through all methods defined in the type and returns them as <see cref="MethodDefinition"/>.
+        /// </summary>
+        /// <param name="type">The type in which to look for the methods.</param>
+        /// <returns>An <see cref="IEnumerable"/> of <see cref="MethodDefinition"/> that contains all methods defined in the type.</returns>
         public static IEnumerable<MethodDefinition> GetAllMethodsDefinedInType(TypeDefinition type)
         {
             foreach (MethodDefinition methodDefinition in type.Methods)
             {
                 yield return methodDefinition;
             }
+            
             foreach (PropertyDefinition propertyDefinition in type.Properties)
             {
-                var getMethod = propertyDefinition.GetMethod;
-                var setMethod = propertyDefinition.SetMethod;
+                MethodDefinition getMethod = propertyDefinition.GetMethod;
                 if (getMethod != null)
-                {
                     yield return getMethod;
-                }
+                
+                MethodDefinition setMethod = propertyDefinition.SetMethod;
                 if (setMethod != null)
                     yield return setMethod;
             }
+            
             foreach(EventDefinition eventDefinition in type.Events)
             {
                 var addMethod = eventDefinition.AddMethod;
@@ -169,6 +240,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                     yield return removeMethod;
                 }
             }
+            
             if (type.HasNestedTypes)
             {
                 foreach (TypeDefinition nestedType in type.NestedTypes)
@@ -189,7 +261,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             HashSet<string> listOfNamesOfAssembliesThatDoNotContainUserCode = new HashSet<string>();
             if (nameOfAssembliesThatDoNotContainUserCode != null)
             {
-                string[] array = nameOfAssembliesThatDoNotContainUserCode.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] array = nameOfAssembliesThatDoNotContainUserCode.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string item in array)
                 {
                     listOfNamesOfAssembliesThatDoNotContainUserCode.Add(item.ToLower());
@@ -264,47 +336,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 && _supportedMscorlibMethods.ContainsKey(type.Name));
         }
 
-        /// <summary>
-        /// Reads SupportedElements.xml and returns a List&lt;Tuple&lt;string, List&lt;string&gt;&gt;&gt; that contains the supported methods defined in SupportedElements.xml, per type.
-        /// </summary>
-        /// <returns>A List&lt;Tuple&lt;string, List&lt;string&gt;&gt;&gt; that contains the supported methods defined in SupportedElements.xml, per type.</returns>
-        internal static List<Tuple<string, List<string>>> GetSupportedMethods(string supportedElementsPath)
-        {
-            List<Tuple<string, List<string>>> result = null;
-
-            // Load the XML file located in the Compiler directory:
-            XDocument xdoc;
-            try
-            {
-                //var xmlFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SupportedElements.xml");
-                //if (!File.Exists(xmlFilePath)) // We also look in the parent folder because we may be in a subfolder of the Compiler folder (such as the "SLMigration" folder).
-                //    xmlFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"..\SupportedElements.xml");
-
-                xdoc = XDocument.Load(supportedElementsPath);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Unable to load the file that contains the list of supported methods (SupportedElements.xml). Please contact support at support@cshtml5.com" + Environment.NewLine + Environment.NewLine + ex.ToString());
-            }
-
-            // Query the document:
-            try
-            {
-                result = (from type in xdoc.Root.Descendants("Type")
-                          select new Tuple<string, List<string>>(
-                              type.Attribute("Name").Value,
-                              (from member in type.Elements("Member")
-                               select member.Attribute("Name").Value).ToList())).ToList();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error while parsing the file that contains the list of supported methods. Please contact support at support@cshtml5.com" + Environment.NewLine + Environment.NewLine + ex.ToString());
-            }
-
-            return result;
-        }
-
-        HashSet<string> GetReferenceToListOfSupportedMethodsForAGivenTypeName(string typeName)
+        private HashSet<string> GetReferenceToListOfSupportedMethodsForAGivenTypeName(string typeName)
         {
             HashSet<string> supportedMethods;
             if (_supportedMscorlibMethods.ContainsKey(typeName))

@@ -1,14 +1,10 @@
 ﻿using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
 using Mono.Cecil;
-using Mono.Collections.Generic;
 using StubGenerator.Common.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StubGenerator.Common.Builder
 {
@@ -26,34 +22,26 @@ namespace StubGenerator.Common.Builder
         private List<CustomAttribute> _customAttributes;
         private HashSet<string> _codeToAddManually;
 
-        private DefaultValueGenerator _defaultValueGenerator = new DefaultValueGenerator();
+        private DefaultValueGenerator _defaultValueGenerator;
 
         private int _indentation;
         private string _currentDirectory;
 
-        private List<ModuleDefinition> _modules;
         private OutputOptions _outputOptions;
         private TypeEnum _typeEnum;
         private int _suffixToAddToVariableNameInCaseOfDuplicate;
         private bool _hasAnIndexer = false;
-        private bool _isInitialized = false;
 
-        private void Init(OutputOptions outputOptions, List<ModuleDefinition> modules)
-        {
-            if (_isInitialized)
-            {
-                throw new Exception("TypeBuilder can only be initialized once.");
-            }
-            _modules = modules;
-            _outputOptions = outputOptions;
-            _suffixToAddToVariableNameInCaseOfDuplicate = 1;
-            _defaultValueGenerator.Init(outputOptions, modules);
-            _isInitialized = true;
-        }
-
+        /// <summary>
+        /// Used to generate the unsupported classes and methods
+        /// </summary>
+        /// <param name="outputOptions"></param>
+        /// <param name="modules"></param>
         public TypeBuilder(OutputOptions outputOptions, List<ModuleDefinition> modules)
         {
-            Init(outputOptions, modules);
+            _outputOptions = outputOptions;
+            _suffixToAddToVariableNameInCaseOfDuplicate = 1;
+            _defaultValueGenerator = new DefaultValueGenerator(outputOptions, modules);
         }
 
         public void Set(TypeDefinition typeToWrite, HashSet<string> additionalCodeIfAny, HashSet<TypeReference> implementedInterfaces, bool hasAnIndexer, string directoryPath, int indentation)
@@ -64,22 +52,6 @@ namespace StubGenerator.Common.Builder
             _hasAnIndexer = hasAnIndexer;
             _currentDirectory = directoryPath;
             _indentation = indentation;
-        }
-
-        internal DefaultValueGenerator DefaultValueGenerator
-        {
-            get
-            {
-                if (!_defaultValueGenerator.IsInitialized)
-                {
-                    _defaultValueGenerator.Init(_outputOptions, _modules);
-                }
-                return _defaultValueGenerator;
-            }
-            private set
-            {
-                _defaultValueGenerator = value;
-            }
         }
 
         internal TypeDefinition Type { get; private set; }
@@ -102,18 +74,8 @@ namespace StubGenerator.Common.Builder
 
         internal HashSet<PropertyInfo> Properties
         {
-            get
-            {
-                if (_properties == null)
-                {
-                    _properties = new HashSet<PropertyInfo>();
-                }
-                return _properties;
-            }
-            private set
-            {
-                _properties = value;
-            }
+            get => _properties ?? (_properties = new HashSet<PropertyInfo>());
+            private set => _properties = value;
         }
 
         internal HashSet<EventDefinition> Events
@@ -792,7 +754,7 @@ namespace StubGenerator.Common.Builder
             res += ")";
             if (method.IsConstructor)
             {
-                res += DefaultValueGenerator.CallBaseConstructorIfAny(method);
+                res += _defaultValueGenerator.CallBaseConstructorIfAny(method);
             }
             if (method.HasBody)
             {
@@ -833,7 +795,7 @@ namespace StubGenerator.Common.Builder
         {
             if (outputOptions == 1)
             {
-                return DefaultValueGenerator.GenerateDefaultValue(type);
+                return _defaultValueGenerator.GenerateDefaultValue(type);
             }
             else
             {
@@ -923,7 +885,7 @@ namespace StubGenerator.Common.Builder
             MethodDefinition constructorIfNone;
             //bool needDefaultConstructor = !DefaultValueGenerator.HasConstructor(declaringType, out constructorIfNone) 
             //                           && (TypeEnum == TypeEnum.Class || TypeEnum == TypeEnum.Struct);
-            bool needDefaultConstructor = !DefaultValueGenerator.HasConstructor(declaringType, out constructorIfNone);
+            bool needDefaultConstructor = !_defaultValueGenerator.HasConstructor(declaringType, out constructorIfNone);
             if (!needDefaultConstructor && methods.Count == 0)
             {
                 return "";
@@ -991,8 +953,8 @@ namespace StubGenerator.Common.Builder
 
         private void AddTypeFromStringConverterMethods(int indentation)
         {
-            MethodDefinition INTERNAL_ConvertFromString = new MethodDefinition("INTERNAL_ConvertFromString", Mono.Cecil.MethodAttributes.Static | Mono.Cecil.MethodAttributes.Assembly, DefaultValueGenerator.InstanceOfTypeSystem.Object);
-            INTERNAL_ConvertFromString.Parameters.Add(new ParameterDefinition(Type.Name.Substring(0, 1).ToLower() + Type.Name.Substring(1) + "AsString", Mono.Cecil.ParameterAttributes.None, DefaultValueGenerator.InstanceOfTypeSystem.String));
+            MethodDefinition INTERNAL_ConvertFromString = new MethodDefinition("INTERNAL_ConvertFromString", Mono.Cecil.MethodAttributes.Static | Mono.Cecil.MethodAttributes.Assembly, _defaultValueGenerator.InstanceOfTypeSystem.Object);
+            INTERNAL_ConvertFromString.Parameters.Add(new ParameterDefinition(Type.Name.Substring(0, 1).ToLower() + Type.Name.Substring(1) + "AsString", Mono.Cecil.ParameterAttributes.None, _defaultValueGenerator.InstanceOfTypeSystem.String));
             AddMethod(new MethodInfo(INTERNAL_ConvertFromString));
             string staticConstructorAsString = "static " + Type.Name + "()\n"
                                              + AnalysisUtils.Indent(indentation + 1) + "{\n"
@@ -1102,6 +1064,9 @@ namespace StubGenerator.Common.Builder
                     res += " sealed";
                 }
             }
+
+            res += " partial";
+
             res += " " + AnalysisUtils.TypeEnumToString(typeEnum);
             // type name
             res += " " + AnalysisUtils.GetFullTypeName(type, false);
@@ -1150,6 +1115,17 @@ namespace StubGenerator.Common.Builder
             return body;
         }
 
+        private string WriteCompilerDirective(string name)
+        {
+            return $"#if {name}\n";
+        }
+
+        private string EndCompilerDirective()
+        {
+            return "#endif\n";
+        }
+        
+
         private string WriteType(TypeDefinition type, TypeEnum typeEnum, HashSet<FieldInfo> fields, HashSet<PropertyInfo> properties, HashSet<EventDefinition> events, HashSet<MethodInfo> methods, List<TypeDefinition> nestedTypes, List<CustomAttribute> customAttributes, HashSet<string> codeToAddManually, HashSet<string> usings, OutputOptions outputOptions, int indentation)
         {
             if (typeEnum == TypeEnum.Enum)
@@ -1174,6 +1150,9 @@ namespace StubGenerator.Common.Builder
                     res += AnalysisUtils.Indent(indentation) + "{\n";
                     indentation++;
                 }
+
+                res += WriteCompilerDirective("WORKINPROGRESS");
+
                 // Write custom attributes
                 res += WriteCustomAttributes(customAttributes, indentation);
 
@@ -1188,6 +1167,9 @@ namespace StubGenerator.Common.Builder
 
                 indentation--;
                 res += AnalysisUtils.Indent(indentation) + "}\n";
+
+                res += EndCompilerDirective();
+
                 if (hasNamespace)
                 {
                     indentation--;
@@ -1362,10 +1344,6 @@ namespace StubGenerator.Common.Builder
 
         public void SetAndRun(TypeDefinition typeToWrite, HashSet<string> additionalCodeIfAny, HashSet<TypeReference> implementedInterfaces, bool hasAnIndexer, string directoryPath, int indentation)
         {
-            if (!_isInitialized)
-            {
-                throw new Exception("TypeBuilder must be initialized first.");
-            }
             Set(typeToWrite, additionalCodeIfAny, implementedInterfaces, hasAnIndexer, directoryPath, indentation);
             string typeAsString = WriteType(Type, TypeEnum, Fields, Properties, Events, Methods, NestedTypes, CustomAttributes, CodeToAddManually, Usings, _outputOptions, _indentation);
             Save(typeAsString);

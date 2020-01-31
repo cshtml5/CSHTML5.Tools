@@ -9,8 +9,6 @@ namespace StubGenerator.Common.Builder
 {
     public class DefaultValueGenerator
     {
-        public bool IsInitialized { get; set; }
-
         private TypeSystem _instanceOfTypeSystem;
 
         public TypeSystem InstanceOfTypeSystem
@@ -51,20 +49,12 @@ namespace StubGenerator.Common.Builder
             }
         }
 
-        public void Init(OutputOptions outputOptions, List<ModuleDefinition> modules)
+        public DefaultValueGenerator(OutputOptions outputOptions, List<ModuleDefinition> modules)
         {
-            if (!IsInitialized)
-            {
-                _instanceOfTypeSystem = null;
-                _constructors = null;
-                _outputOptions = outputOptions;
-                _modules = modules;
-                IsInitialized = true;
-            }
-            else
-            {
-                throw new Exception("DefaultValueGenerator can only be initialized once.");
-            }
+            _instanceOfTypeSystem = null;
+            _constructors = null;
+            _outputOptions = outputOptions;
+            _modules = modules;
         }
 
         private bool TryGetConstructors(TypeReference type, out HashSet<MethodDefinition> constructorsIfAny)

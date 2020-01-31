@@ -2,59 +2,69 @@
 using DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer;
 using Mono.Cecil;
 using StubGenerator.Common.Analyzer;
-using StubGenerator.Common.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StubGenerator.Common
 {
     public class StubGenerator
     {
         // Assemblies to analyze
-        private string[] _inputAssemblies;
+        private HashSet<string> _inputAssemblies;
 
         // Path of the folder containing the assemblies where the stuff (type + methods) we are looking for is defined
         private string _referencedAssembliesFolderPath;
 
         // List of Assemblies to look into for unsupported methods and types
-        private List<string> _referencedAssembliesToLookInto;
-
-        private OutputOptions _outputOptions;
+        private HashSet<string> _referencedAssembliesToLookInto;
 
         private List<ModuleDefinition> _modules;
 
         private AssemblyAnalyzer _assemblyAnalyzer;
 
+        private AnalyzeHelper _analyzeHelper;
+
         private Dictionary<string, Dictionary<string, HashSet<string>>> _unsupportedMethodsInfo;
+
+        public StubGenerator()
+        {
+            _analyzeHelper = new AnalyzeHelper(
+                new CoreSupportedMethodsContainer(Path.Combine(AnalysisUtils.GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration")),
+                Configuration.SupportedElementsPath
+                );
+
+            _inputAssemblies = GetAssemblies(Configuration.AssembliesToAnalyzePath, true);
+            _referencedAssembliesFolderPath = Configuration.ReferencedAssembliesFolderPath;
+            _referencedAssembliesToLookInto = GetAssemblies(_referencedAssembliesFolderPath);
+            GetModules();
+            AnalysisUtils.SetModules(_modules);
+            GetUnsupportedMethods();
+            AddUndetectedMethodToUnsupportedMethods(Configuration.MethodsToAddManuallyBecauseTheyAreUndetected);
+            _assemblyAnalyzer = new AssemblyAnalyzer(_unsupportedMethodsInfo, _analyzeHelper, _modules, Configuration.OutputOptions);
+        }
 
         /// <summary>
         /// Retrieve all methods and types used in the _inputAssemblies and organize them in a Dictionary 
         /// </summary>
         private void GetUnsupportedMethods()
         {
-            ILogger logger = new LoggerThatAggregatesAllErrors();
             List<UnsupportedMethodInfo> unsupportedMethodInfos = new List<UnsupportedMethodInfo>();
-            CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(System.IO.Path.Combine(AnalysisUtils.GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration"));
-
+            
             foreach (string filename in _inputAssemblies)
             {
                 CompatibilityAnalyzer.Analyze(
                     filename,
-                    logger,
                     unsupportedMethodInfos,
-                    coreSupportedMethods,
+                    _analyzeHelper,
                     _inputAssemblies,
                     Configuration.UrlNamespacesThatBelongToUserCode,
                     new HashSet<string>(),
                     Configuration.ExcludedFiles,
-                    Configuration.supportedElementsPath,
-                    Configuration.mscorlibFolderPath,
-                    Configuration.sdkFolderPath,
+                    Configuration.MscorlibFolderPath,
+                    Configuration.SdkFolderPath,
                     "",
+                    Configuration.SupportedElementsPath,
                     skipTypesWhereNoMethodIsActuallyCalled: false,
                     addBothPropertyAndEventWhenNotFound: true,
                     additionalFolderWhereToResolveAssemblies: Configuration.ReferencedAssembliesFolderPath);
@@ -205,34 +215,17 @@ namespace StubGenerator.Common
         }
 
         /// <summary>
-        /// Initialyze the StubGenerator
-        /// </summary>
-        private void Init()
-        {
-            _outputOptions = Configuration.OutputOptions;
-            _inputAssemblies = GetAssemblies(Configuration.assembliesToAnalyzePath, true).ToArray<string>();
-            _referencedAssembliesFolderPath = Configuration.ReferencedAssembliesFolderPath;
-            _referencedAssembliesToLookInto = GetAssemblies(_referencedAssembliesFolderPath);
-            GetModules();
-            AnalysisUtils.SetModules(_modules);
-            GetUnsupportedMethods();
-            AddUndetectedMethodToUnsupportedMethods(Configuration.MethodsToAddManuallyBecauseTheyAreUndetected);
-            _assemblyAnalyzer = new AssemblyAnalyzer(_unsupportedMethodsInfo, _modules, _outputOptions);
-        }
-
-        /// <summary>
         /// Main method of the generator. Look in every referenced assemblies to find the unsupported methods and types
         /// </summary>
         public void Run()
         {
-            Init();
             foreach (string assembly in _referencedAssembliesToLookInto)
             {
                 Dictionary<string, HashSet<string>> unsupportedMethods;
                 _unsupportedMethodsInfo.TryGetValue(assembly, out unsupportedMethods);
                 if (unsupportedMethods != null)
                 {
-                    AssemblyDefinition assemblyToLookInto = CompatibilityAnalyzer.LoadAssembly(Path.Combine(_referencedAssembliesFolderPath, assembly + ".dll"), Configuration.mscorlibFolderPath);
+                    AssemblyDefinition assemblyToLookInto = CompatibilityAnalyzer.LoadAssembly(Path.Combine(_referencedAssembliesFolderPath, assembly + ".dll"), Configuration.MscorlibFolderPath);
                     _assemblyAnalyzer.Set(assemblyToLookInto, unsupportedMethods);
                     _assemblyAnalyzer.Run();
                 }
@@ -263,13 +256,13 @@ namespace StubGenerator.Common
         }
 
         /// <summary>
-        /// Get paths of every referenced assemblies
+        /// Get paths of every assemblies in the folder
         /// </summary>
-        /// <param name="folderPath">path of the folder where referenced assemblies are located</param>
+        /// <param name="folderPath">path of the folder where assemblies are located</param>
         /// <returns></returns>
-        private List<string> GetAssemblies(string folderPath, bool getFullName = false)
+        private HashSet<string> GetAssemblies(string folderPath, bool getFullName = false)
         {
-            List<string> assemblies = new List<string>();
+            HashSet<string> assemblies = new HashSet<string>();
             DirectoryInfo directory = new DirectoryInfo(folderPath);
             FileInfo[] files = directory.GetFiles("*.dll");
             foreach (FileInfo file in files)

@@ -13,8 +13,7 @@ namespace StubGenerator.Common
     {
         static void Main(string[] args)
         {
-            StubGenerator s = new StubGenerator();
-            s.Run();
+            new StubGenerator().Run();
             Console.WriteLine("Done.");
         }
     }

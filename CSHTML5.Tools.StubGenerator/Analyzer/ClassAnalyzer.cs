@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using StubGenerator.Common.Options;
 using DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer;
 using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
-using System.Reflection;
 using StubGenerator.Common.Builder;
 
 namespace StubGenerator.Common.Analyzer
 {
-    public class ClassAnalyzer : IElementAnalyzer<TypeDefinition>//, IElementWriter<TypeDefinition>
+    public class ClassAnalyzer : IElementAnalyzer<TypeDefinition>
     {
-        public static AnalyzeHelper analyzeHelpher = new AnalyzeHelper();
+        public static AnalyzeHelper AnalyzeHelper;
         private OutputOptions _outputOptions;
         private Dictionary<string, Dictionary<string, HashSet<string>>> _unsupportedMethods;
         private HashSet<string> _unsupportedMethodsInCurrentType;
@@ -25,70 +23,39 @@ namespace StubGenerator.Common.Analyzer
         private HashSet<string> _alreadyImplementedTypes;
 
         // interfaces to implement
-        internal HashSet<TypeReference> _implementedInterfaces;
+        internal HashSet<TypeReference> ImplementedInterfaces;
 
-        // DependencyProperties to implement
-        private HashSet<string> _dependencyProperties;
+        private bool _hasAnIndexer;
 
-        // Namespaces used in the current type
-        private HashSet<string> _usings;
+        internal Dictionary<TypeReference, HashSet<string>> AdditionalTypesToImplement;
 
-        // Custom attributes
-        private HashSet<string> _customAttributes;
-
-        private bool _hasAnIndexer = false;
-
-        private bool _isInitialized = false;
-
-        internal Dictionary<TypeReference, HashSet<string>> _additionalTypesToImplement;
-
-        internal string _assemblyName;
+        internal string AssemblyName;
 
         public TypeDefinition Element { get; set; }
 
         private MethodAnalyzer MethodAnalyzer { get; set; }
 
-        internal ClassAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
-        {
-            Init(unsupportedMethods, modules, outputOptions);
-        }
-
         /// <summary>
-        /// Initialyze the ClassAnalyzer. Must be call once.
+        /// Instantiate a ClassAnalyzer.
         /// </summary>
         /// <param name="unsupportedMethods"></param>
+        /// <param name="analyzeHelper"></param>
         /// <param name="modules"></param>
         /// <param name="outputOptions"></param>
-        private void Init(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
+        internal ClassAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, AnalyzeHelper analyzeHelper, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
         {
-            if (!_isInitialized)
-            {
-                if (outputOptions == null)
-                {
-                    _outputOptions = new OutputOptions();
-                }
-                else
-                {
-                    _outputOptions = outputOptions;
-                }
-                if (!analyzeHelpher._initialized)
-                {
-                    CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(System.IO.Path.Combine(AnalysisUtils.GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration"));
-                    analyzeHelpher.Initialize(coreSupportedMethods, Configuration.supportedElementsPath);
-                }
+            _outputOptions = outputOptions;
 
-                _implementedInterfaces = new HashSet<TypeReference>();
-                _usings = new HashSet<string>();
-                _customAttributes = new HashSet<string>();
-                _alreadyImplementedTypes = new HashSet<string>();
-                _dependencyProperties = new HashSet<string>();
-                _additionalTypesToImplement = new Dictionary<TypeReference, HashSet<string>>();
-                _unsupportedMethods = unsupportedMethods;
-                _modules = modules;
-                MethodAnalyzer = new MethodAnalyzer(_unsupportedMethods, _modules, this, _outputOptions);
-                _typeBuilder = new TypeBuilder(_outputOptions, _modules);
-                _isInitialized = true;
-            }
+            AnalyzeHelper = analyzeHelper;
+            
+            _modules = modules;
+
+            ImplementedInterfaces = new HashSet<TypeReference>();
+            _alreadyImplementedTypes = new HashSet<string>();
+            AdditionalTypesToImplement = new Dictionary<TypeReference, HashSet<string>>();
+            _unsupportedMethods = unsupportedMethods;
+            MethodAnalyzer = new MethodAnalyzer(_unsupportedMethods, this, _outputOptions);
+            _typeBuilder = new TypeBuilder(_outputOptions, _modules);
 
         }
 
@@ -101,12 +68,9 @@ namespace StubGenerator.Common.Analyzer
         {
             Element = type;
             _unsupportedMethodsInCurrentType = unsupportedMethods;
-            _assemblyName = (type != null ? type.Scope.Name.Replace(".dll", "") : "");
-            _implementedInterfaces.Clear();
-            _usings.Clear();
-            _customAttributes.Clear();
+            AssemblyName = (type != null ? type.Scope.Name.Replace(".dll", "") : "");
+            ImplementedInterfaces.Clear();
             _hasAnIndexer = false;
-            _dependencyProperties.Clear();
         }
 
         /// <summary>
@@ -137,18 +101,14 @@ namespace StubGenerator.Common.Analyzer
                     }
                 }
             }
-            _typeBuilder.SetAndRun(Element, GetAdditionalCodeIfAny(_assemblyName, Element.Name), _implementedInterfaces, _hasAnIndexer, _assemblyName, 0);            
+
+            _typeBuilder.SetAndRun(Element, GetAdditionalCodeIfAny(AssemblyName, Element.Name), ImplementedInterfaces, _hasAnIndexer, AssemblyName, 0);            
             //Used to make sure we don't implement twice the same type. A type could be generated once with a few methods and could be override afterward with less methods defined, but it can't be the other way.
-            _alreadyImplementedTypes.Add(_assemblyName + '.' + Element.FullName);
+            _alreadyImplementedTypes.Add(AssemblyName + '.' + Element.FullName);
         }
 
         public void Run()
         {
-            if (!_isInitialized)
-            {
-                throw new Exception("ClassAnalyzer must be initialized. Please call Init() first.");
-            }
-
             if (CanWorkOnElement())
             {
                 Stack<TypeDefinition> typesToAnalyze = new Stack<TypeDefinition>();
@@ -301,16 +261,16 @@ namespace StubGenerator.Common.Analyzer
 
         internal void AddTypeToImplement(TypeReference typeToAdd, HashSet<string> methodsToImplement = null)
         {
-            if (_additionalTypesToImplement.ContainsKey(typeToAdd))
+            if (AdditionalTypesToImplement.ContainsKey(typeToAdd))
             {
                 if (methodsToImplement != null)
                 {
-                    _additionalTypesToImplement[typeToAdd].UnionWith(methodsToImplement);
+                    AdditionalTypesToImplement[typeToAdd].UnionWith(methodsToImplement);
                 }
             }
             else
             {
-                _additionalTypesToImplement.Add(typeToAdd, methodsToImplement ?? new HashSet<string>());
+                AdditionalTypesToImplement.Add(typeToAdd, methodsToImplement ?? new HashSet<string>());
             }
         }
 
@@ -330,7 +290,6 @@ namespace StubGenerator.Common.Analyzer
                     TypeDefinition interfaceTypeDefinition = AnalysisUtils.GetTypeDefinitionFromTypeReference(@interface.InterfaceType, _modules);
                     if (interfaceTypeDefinition != null)
                     {
-                        string typeName = interfaceTypeDefinition.Name;
                         bool isInterfaceTypeUnsupported = IsTypeGoingToBeImplemented(interfaceTypeDefinition);
                         string assemblyName = interfaceTypeDefinition.Scope.Name.Replace(".dll", "");
                         //interface is not used in client code, but can still be defined in Core/mscorlib
@@ -338,30 +297,30 @@ namespace StubGenerator.Common.Analyzer
                         {
                             if (interfaceTypeDefinition.HasMethods)
                             {
-                                if (analyzeHelpher._coreSupportedMethods.ContainsType(interfaceTypeDefinition.Name, interfaceTypeDefinition.Namespace))
+                                if (AnalyzeHelper.CoreSupportedMethods.ContainsType(interfaceTypeDefinition.Name, interfaceTypeDefinition.Namespace))
                                 {
-                                    _implementedInterfaces.Add(@interface.InterfaceType);
+                                    ImplementedInterfaces.Add(@interface.InterfaceType);
                                     AddUsing(interfaceTypeDefinition.Namespace);
                                     foreach (MethodDefinition method in interfaceTypeDefinition.Methods)
                                     {
                                         //Check if method is supported and implement it if it is
-                                        if (analyzeHelpher._coreSupportedMethods.Contains(interfaceTypeDefinition.Namespace, interfaceTypeDefinition.Name, method.Name))
+                                        if (AnalyzeHelper.CoreSupportedMethods.Contains(interfaceTypeDefinition.Namespace, interfaceTypeDefinition.Name, method.Name))
                                         {
                                             res.Add(method.Name);
                                         }
                                     }
                                 }
-                                else if (analyzeHelpher.IsTypeSupported(@interface.InterfaceType))
+                                else if (AnalyzeHelper.IsTypeSupported(@interface.InterfaceType))
                                 {
-                                    _implementedInterfaces.Add(@interface.InterfaceType);
+                                    ImplementedInterfaces.Add(@interface.InterfaceType);
                                     AddUsing(interfaceTypeDefinition.Namespace);
 
                                     //isInterfaceRequired = true;
-                                    _implementedInterfaces.Add(@interface.InterfaceType);
+                                    ImplementedInterfaces.Add(@interface.InterfaceType);
                                     foreach (MethodDefinition method in interfaceTypeDefinition.Methods)
                                     {
                                         //Check if method is supported and implement it if it is
-                                        if (analyzeHelpher.IsMethodSupported(method))
+                                        if (AnalyzeHelper.IsMethodSupported(method))
                                         {
                                             res.Add(method.Name);
                                         }
@@ -372,7 +331,7 @@ namespace StubGenerator.Common.Analyzer
                                     if ((_outputOptions.OutputOnlyPublicAndProtectedMembers && (interfaceTypeDefinition.IsPublic || interfaceTypeDefinition.IsNestedPublic || interfaceTypeDefinition.IsNestedFamily))
                                         || (!_outputOptions.OutputOnlyPublicAndProtectedMembers))
                                     {
-                                        _implementedInterfaces.Add(@interface.InterfaceType);
+                                        ImplementedInterfaces.Add(@interface.InterfaceType);
                                         AddUsing(interfaceTypeDefinition.Namespace);
                                         AddTypeToImplement(interfaceTypeDefinition);
                                     }
@@ -389,12 +348,12 @@ namespace StubGenerator.Common.Analyzer
                             {
                                 if (!_unsupportedMethods[assemblyName].TryGetValue(interfaceTypeDefinition.Name, out methodsToImplements))
                                 {
-                                    methodsToImplements = _additionalTypesToImplement[interfaceTypeDefinition];
+                                    methodsToImplements = AdditionalTypesToImplement[interfaceTypeDefinition];
                                 }
                             }
                             else
                             {
-                                methodsToImplements = _additionalTypesToImplement[interfaceTypeDefinition];
+                                methodsToImplements = AdditionalTypesToImplement[interfaceTypeDefinition];
                             }
                             foreach (MethodDefinition method in interfaceTypeDefinition.Methods)
                             {
@@ -406,7 +365,7 @@ namespace StubGenerator.Common.Analyzer
                             if ((_outputOptions.OutputOnlyPublicAndProtectedMembers && (interfaceTypeDefinition.IsPublic || interfaceTypeDefinition.IsNestedPublic || interfaceTypeDefinition.IsNestedFamily))
                                 || (!_outputOptions.OutputOnlyPublicAndProtectedMembers))
                             {
-                                _implementedInterfaces.Add(interfaceTypeDefinition);
+                                ImplementedInterfaces.Add(interfaceTypeDefinition);
                                 AddUsing(interfaceTypeDefinition.Namespace);
                             }
                         }
@@ -439,16 +398,14 @@ namespace StubGenerator.Common.Analyzer
         /// <summary>
         /// Method used to update the set of unsupported methods.
         /// </summary>
-        /// <param name="assemblyName"></param>
-        /// <param name="typeName"></param>
-        /// <param name="methodName"></param>
+        /// <param name="methodsToAdd"></param>
         private void UpdateUnsupportedMethodsInfo(HashSet<string> methodsToAdd)
         {
             if (methodsToAdd != null)
             {
                 foreach (string method in methodsToAdd)
                 {
-                    string assemblyName = _assemblyName;
+                    string assemblyName = AssemblyName;
                     string typeName = Element.Name;
                     string methodName = method;
                     if (_unsupportedMethods.ContainsKey(assemblyName))
@@ -497,8 +454,8 @@ namespace StubGenerator.Common.Analyzer
                                 if (AnalysisUtils.IsMethodAbstract(method))
                                 {
                                     if (MethodAnalyzer.IsMethodUnsupported(method)
-                                        || analyzeHelpher._coreSupportedMethods.Contains(baseType.Namespace, baseType.Name, method.Name)
-                                        || analyzeHelpher.IsMethodSupported(method))
+                                        || AnalyzeHelper.CoreSupportedMethods.Contains(baseType.Namespace, baseType.Name, method.Name)
+                                        || AnalyzeHelper.IsMethodSupported(method))
                                     {
                                         res.Add(method.Name);
                                     }
@@ -512,7 +469,7 @@ namespace StubGenerator.Common.Analyzer
             return res;
         }
 
-        private void AddField(Builder.FieldInfo field)
+        private void AddField(FieldInfo field)
         {
             _typeBuilder.AddField(field);
         }
@@ -520,15 +477,15 @@ namespace StubGenerator.Common.Analyzer
         internal void AddField(string fieldName, TypeReference type, bool isDependencyProperty, bool isAttached, bool isStatic, string attachedPropertyNameIfAny, TypeReference dependencyPropertyTypeIfAny, out string newFieldNameIfAlreadyUsed)
         {
             _typeBuilder.IsFieldNameTaken(fieldName, out newFieldNameIfAlreadyUsed);
-            AddField(new Builder.FieldInfo(newFieldNameIfAlreadyUsed, type, isStatic: isStatic, isDependencyProperty: isDependencyProperty, isAttachedProperty: isAttached, dependencyPropertyTypeIfAny: dependencyPropertyTypeIfAny, propertyName: attachedPropertyNameIfAny));
+            AddField(new FieldInfo(newFieldNameIfAlreadyUsed, type, isStatic, isDependencyProperty,  isAttached, dependencyPropertyTypeIfAny, attachedPropertyNameIfAny));
         }
 
-        internal void AddField(FieldDefinition field, bool isDependencyProperty, bool isAttachedProperty, TypeReference dependencyPropertyTypeIfAny, bool isStatic, string attachedPropertyNameIfAny)
+        internal void AddField(FieldDefinition field, bool isDependencyProperty, bool isAttachedProperty, TypeReference dependencyPropertyTypeIfAny, string attachedPropertyNameIfAny)
         {
-            AddField(new Builder.FieldInfo(field, isDependencyProperty: isDependencyProperty, isAttachedProperty: isAttachedProperty, dependencyPropertyTypeIfAny: dependencyPropertyTypeIfAny, propertyName: attachedPropertyNameIfAny));
+            AddField(new FieldInfo(field, isDependencyProperty, isAttachedProperty, dependencyPropertyTypeIfAny, attachedPropertyNameIfAny));
         }
 
-        internal void AddProperty(Builder.PropertyInfo property)
+        internal void AddProperty(PropertyInfo property)
         {
             _typeBuilder.AddProperty(property);
         }
@@ -575,12 +532,12 @@ namespace StubGenerator.Common.Analyzer
             {
                 return false;
             }
-            bool isCoreSupported = analyzeHelpher._coreSupportedMethods.ContainsType(Element.Name, Element.Namespace);
-            bool isMscorlibSupported = analyzeHelpher.IsTypeSupported(Element);
-            bool isNotAlreadyImplemented = !_alreadyImplementedTypes.Contains(_assemblyName + '.' + Element.FullName);
+            //bool isCoreSupported = analyzeHelpher._coreSupportedMethods.ContainsType(Element.Name, Element.Namespace);
+            bool isMscorlibSupported = AnalyzeHelper.IsTypeSupported(Element);
+            bool isNotAlreadyImplemented = !_alreadyImplementedTypes.Contains(AssemblyName + '.' + Element.FullName);
             bool isAccessible = (_outputOptions.OutputOnlyPublicAndProtectedMembers && (Element.IsPublic || Element.IsNestedPublic || Element.IsNestedFamily))
                 || (!_outputOptions.OutputOnlyPublicAndProtectedMembers);
-            return isNotAlreadyImplemented && isAccessible && !isCoreSupported && !isMscorlibSupported;
+            return isNotAlreadyImplemented && isAccessible /*&& !isCoreSupported */&& !isMscorlibSupported;
         }
 
         /// <summary>
@@ -594,13 +551,13 @@ namespace StubGenerator.Common.Analyzer
             {
                 return false;
             }
-            bool isCoreSupported = analyzeHelpher._coreSupportedMethods.ContainsType(type.Name, type.Namespace);
-            bool isMscorlibSupported = analyzeHelpher.IsTypeSupported(type);
+            //bool isCoreSupported = analyzeHelpher._coreSupportedMethods.ContainsType(type.Name, type.Namespace);
+            bool isMscorlibSupported = AnalyzeHelper.IsTypeSupported(type);
             string assemblyName = type.Scope.Name.Replace(".dll", "");
             bool isNotAlreadyImplemented = !_alreadyImplementedTypes.Contains(assemblyName + '.' + type.FullName);
             bool isAccessible = (_outputOptions.OutputOnlyPublicAndProtectedMembers && (type.IsPublic || type.IsNestedPublic || type.IsNestedFamily))
                 || (!_outputOptions.OutputOnlyPublicAndProtectedMembers);
-            return isNotAlreadyImplemented && isAccessible && !isCoreSupported && !isMscorlibSupported;
+            return isNotAlreadyImplemented && isAccessible /*&& !isCoreSupported */&& !isMscorlibSupported;
         }
 
         private HashSet<string> GetAdditionalCodeIfAny(string assemblyName, string typeName)
@@ -622,16 +579,16 @@ namespace StubGenerator.Common.Analyzer
         {
             TypeReference type;
             HashSet<string> methods;
-            while (_additionalTypesToImplement.Count > 0)
+            while (AdditionalTypesToImplement.Count > 0)
             {
-                var keyValuePair = _additionalTypesToImplement.First();
+                var keyValuePair = AdditionalTypesToImplement.First();
                 type = keyValuePair.Key;
                 methods = keyValuePair.Value;
                 if(PrepareForAdditionalType(type, methods))
                 {
                     Execute();
                 }
-                _additionalTypesToImplement.Remove(type);
+                AdditionalTypesToImplement.Remove(type);
             }
         }
 
@@ -643,8 +600,8 @@ namespace StubGenerator.Common.Analyzer
                 //we can't find the type.
                 return false;
             }
-            bool isCoreSupported = analyzeHelpher._coreSupportedMethods.ContainsType(type.Name, type.Namespace);
-            bool isMscorlibSupported = analyzeHelpher.IsTypeSupported(type);
+            bool isCoreSupported = AnalyzeHelper.CoreSupportedMethods.ContainsType(type.Name, type.Namespace);
+            bool isMscorlibSupported = AnalyzeHelper.IsTypeSupported(type);
             if(isCoreSupported || isMscorlibSupported)
             {
                 //type is already supported.
@@ -688,7 +645,7 @@ namespace StubGenerator.Common.Analyzer
             if (type.IsGenericInstance)
             {
                 GenericInstanceType instanceType = (GenericInstanceType)type;
-                bool isTypeKnown = analyzeHelpher._coreSupportedMethods.ContainsType(instanceType.ElementType.Name, instanceType.ElementType.Namespace) || analyzeHelpher.IsTypeSupported(type) || IsTypeGoingToBeImplemented(instanceType.ElementType) || AnalysisUtils.IsDefaultValueType(instanceType.ElementType.FullName);
+                bool isTypeKnown = AnalyzeHelper.CoreSupportedMethods.ContainsType(instanceType.ElementType.Name, instanceType.ElementType.Namespace) || AnalyzeHelper.IsTypeSupported(type) || IsTypeGoingToBeImplemented(instanceType.ElementType) || AnalysisUtils.IsDefaultValueType(instanceType.ElementType.FullName);
                 if (!isTypeKnown)
                 {
                     AddTypeToImplement(instanceType.ElementType);
@@ -696,7 +653,7 @@ namespace StubGenerator.Common.Analyzer
                 IEnumerable<TypeReference> genericArgsTypes = instanceType.GenericArguments;
                 foreach (TypeReference genericArgType in genericArgsTypes)
                 {
-                    bool isCurrentGParamKnown = AnalyzeFullType(genericArgType);
+                    AnalyzeFullType(genericArgType);
                 }
                 return isTypeKnown;
             }
@@ -706,7 +663,7 @@ namespace StubGenerator.Common.Analyzer
             }
             else
             {
-                bool isTypeKnown = analyzeHelpher._coreSupportedMethods.ContainsType(type.Name, type.Namespace) || analyzeHelpher.IsTypeSupported(type) || IsTypeGoingToBeImplemented(type) || AnalysisUtils.IsDefaultValueType(type.FullName);
+                bool isTypeKnown = AnalyzeHelper.CoreSupportedMethods.ContainsType(type.Name, type.Namespace) || AnalyzeHelper.IsTypeSupported(type) || IsTypeGoingToBeImplemented(type) || AnalysisUtils.IsDefaultValueType(type.FullName);
                 if (!isTypeKnown)
                 {
                     AddTypeToImplement(type);
@@ -731,7 +688,7 @@ namespace StubGenerator.Common.Analyzer
                     return true;
                 }
             }
-            return _additionalTypesToImplement.ContainsKey(type);
+            return AdditionalTypesToImplement.ContainsKey(type);
         }
     }
 }

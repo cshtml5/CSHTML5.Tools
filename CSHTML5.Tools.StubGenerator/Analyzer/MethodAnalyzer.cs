@@ -11,19 +11,12 @@ namespace StubGenerator.Common.Analyzer
         private OutputOptions _outputOptions;
         private Dictionary<string, Dictionary<string, HashSet<string>>> _unsupportedMethods;
         private HashSet<string> _unsupportedMethodsInCurrentType;
-        private List<ModuleDefinition> _modules;
         private MethodType _isMethodOrPropertyOrEvent;
         private ClassAnalyzer _parentClassAnalyzer;
         private Dictionary<string, Dictionary<string, HashSet<MethodSignature>>> _implementedMethods;
         private bool _declaringTypeHasAnIndexer;
-        private bool _isInitialized = false;
 
         public MethodDefinition Element { get; set; }
-
-        internal MethodAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, ClassAnalyzer parentClassAnalyzer, OutputOptions outputOptions = null)
-        {
-            Init(unsupportedMethods, modules, parentClassAnalyzer, outputOptions);
-        }
 
         /// <summary>
         /// Initialize the MethodAnalyzer. Must be call once.
@@ -32,26 +25,21 @@ namespace StubGenerator.Common.Analyzer
         /// <param name="modules"></param>
         /// <param name="parentClassAnalyzer"></param>
         /// <param name="outputOptions"></param>
-        private void Init(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, ClassAnalyzer parentClassAnalyzer, OutputOptions outputOptions = null)
+        internal MethodAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, ClassAnalyzer parentClassAnalyzer, OutputOptions outputOptions = null)
         {
-            if (!_isInitialized)
+            if (outputOptions == null)
             {
-                if (outputOptions == null)
-                {
-                    _outputOptions = new OutputOptions();
-                }
-                else
-                {
-                    _outputOptions = outputOptions;
-                }
-
-                _implementedMethods = new Dictionary<string, Dictionary<string, HashSet<MethodSignature>>>();
-                _parentClassAnalyzer = parentClassAnalyzer;
-                _unsupportedMethods = unsupportedMethods;
-                _modules = modules;
-                _declaringTypeHasAnIndexer = false;
-                _isInitialized = true;
+                _outputOptions = new OutputOptions();
             }
+            else
+            {
+                _outputOptions = outputOptions;
+            }
+
+            _implementedMethods = new Dictionary<string, Dictionary<string, HashSet<MethodSignature>>>();
+            _parentClassAnalyzer = parentClassAnalyzer;
+            _unsupportedMethods = unsupportedMethods;
+            _declaringTypeHasAnIndexer = false;
         }
 
         public void SetForType(HashSet<string> unsupportedMethodsInCurrentType, bool hasIndexer)
@@ -72,12 +60,12 @@ namespace StubGenerator.Common.Analyzer
         /// <returns></returns>
         private bool IsMethodAlreadyImplemented(MethodDefinition method)
         {
-            if (_implementedMethods.ContainsKey(_parentClassAnalyzer._assemblyName))
+            if (_implementedMethods.ContainsKey(_parentClassAnalyzer.AssemblyName))
             {
-                if (_implementedMethods[_parentClassAnalyzer._assemblyName].ContainsKey(_parentClassAnalyzer.Element.FullName))
+                if (_implementedMethods[_parentClassAnalyzer.AssemblyName].ContainsKey(_parentClassAnalyzer.Element.FullName))
                 {
                     MethodSignature sig = new MethodSignature(method);
-                    return _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Contains(new MethodSignature(method));
+                    return _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Contains(new MethodSignature(method));
                 }
                 else
                 {
@@ -99,13 +87,13 @@ namespace StubGenerator.Common.Analyzer
             {
                 fromInterface = method.Name.Substring(0, method.Name.LastIndexOf('.') + 1);
             }
-            if (_implementedMethods.ContainsKey(_parentClassAnalyzer._assemblyName))
+            if (_implementedMethods.ContainsKey(_parentClassAnalyzer.AssemblyName))
             {
-                if (_implementedMethods[_parentClassAnalyzer._assemblyName].ContainsKey(_parentClassAnalyzer.Element.FullName))
+                if (_implementedMethods[_parentClassAnalyzer.AssemblyName].ContainsKey(_parentClassAnalyzer.Element.FullName))
                 {
                     if (type == MethodType.METHOD)
                     {
-                        _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(method));
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(method));
                         return new Tuple<AccessModifierEnum, AccessModifierEnum>(AccessModifierEnum.PUBLIC, AccessModifierEnum.PUBLIC);
                     }
                     else if (type == MethodType.PROPERTY)
@@ -113,11 +101,11 @@ namespace StubGenerator.Common.Analyzer
                         string propertyName = GetNameOfPropertyOrEvent(method.Name);
                         MethodSignature methodToImplement = new MethodSignature(method);
                         MethodSignature secondMethod = GetSignatureOfSecondMethodOfPropertyFromFirstMethod(method);
-                        _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(methodToImplement);
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(methodToImplement);
                         AccessModifierEnum secondMethodAccessModifierIfAny;
                         if ((secondMethodAccessModifierIfAny = IsPropertyMethodDefined(secondMethod, _parentClassAnalyzer.Element)) != AccessModifierEnum.NONE)
                         {
-                            _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(secondMethod);
+                            _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(secondMethod);
                         }
                         if (method.Name.Contains("get_"))
                         {
@@ -132,26 +120,26 @@ namespace StubGenerator.Common.Analyzer
                     {
                         string eventName = GetNameOfPropertyOrEvent(method.Name);
                         string returnType = method.Parameters[0].ParameterType.FullName;
-                        _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "add_" + eventName, "System.Void", true, new List<string>() { returnType }));
-                        _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "remove_" + eventName, "System.Void", true, new List<string>() { returnType }));
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "add_" + eventName, "System.Void", true, new List<string>() { returnType }));
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "remove_" + eventName, "System.Void", true, new List<string>() { returnType }));
                     }
                 }
                 else
                 {
                     if (type == MethodType.METHOD)
                     {
-                        _implementedMethods[_parentClassAnalyzer._assemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() { new MethodSignature(method) });
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() { new MethodSignature(method) });
                     }
                     else if (type == MethodType.PROPERTY)
                     {
                         string propertyName = GetNameOfPropertyOrEvent(method.Name);
                         MethodSignature methodToImplement = new MethodSignature(method);
                         MethodSignature secondMethod = GetSignatureOfSecondMethodOfPropertyFromFirstMethod(method);
-                        _implementedMethods[_parentClassAnalyzer._assemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() { methodToImplement });
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() { methodToImplement });
                         AccessModifierEnum secondMethodAccessModifierIfAny;
                         if ((secondMethodAccessModifierIfAny = IsPropertyMethodDefined(secondMethod, _parentClassAnalyzer.Element)) != AccessModifierEnum.NONE)
                         {
-                            _implementedMethods[_parentClassAnalyzer._assemblyName][_parentClassAnalyzer.Element.FullName].Add(secondMethod);
+                            _implementedMethods[_parentClassAnalyzer.AssemblyName][_parentClassAnalyzer.Element.FullName].Add(secondMethod);
                         }
                         if (method.Name.Contains("get_"))
                         {
@@ -166,7 +154,7 @@ namespace StubGenerator.Common.Analyzer
                     {
                         string eventName = GetNameOfPropertyOrEvent(method.Name);
                         string returnType = method.Parameters[0].ParameterType.FullName;
-                        _implementedMethods[_parentClassAnalyzer._assemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() {
+                        _implementedMethods[_parentClassAnalyzer.AssemblyName].Add(_parentClassAnalyzer.Element.FullName, new HashSet<MethodSignature>() {
                             new MethodSignature(fromInterface + "add_" + eventName, "System.Void", true, new List<string>() { returnType }),
                             new MethodSignature(fromInterface + "remove_" + eventName, "System.Void", true, new List<string>() { returnType })
                         });
@@ -182,7 +170,7 @@ namespace StubGenerator.Common.Analyzer
                 if (type == MethodType.METHOD)
                 {
                     typeDict[_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(method));
-                    _implementedMethods.Add(_parentClassAnalyzer._assemblyName, typeDict);
+                    _implementedMethods.Add(_parentClassAnalyzer.AssemblyName, typeDict);
                 }
                 else if (type == MethodType.PROPERTY)
                 {
@@ -195,7 +183,7 @@ namespace StubGenerator.Common.Analyzer
                     {
                         typeDict[_parentClassAnalyzer.Element.FullName].Add(secondMethod);
                     }
-                    _implementedMethods.Add(_parentClassAnalyzer._assemblyName, typeDict);
+                    _implementedMethods.Add(_parentClassAnalyzer.AssemblyName, typeDict);
                     if (method.Name.Contains("get_"))
                     {
                         return new Tuple<AccessModifierEnum, AccessModifierEnum>(AccessModifierEnum.PUBLIC, secondMethodAccessModifierIfAny);
@@ -211,7 +199,7 @@ namespace StubGenerator.Common.Analyzer
                     string returnType = method.Parameters[0].ParameterType.FullName;
                     typeDict[_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "add_" + eventName, "System.Void", true, new List<string>() { returnType }));
                     typeDict[_parentClassAnalyzer.Element.FullName].Add(new MethodSignature(fromInterface + "remove_" + eventName, "System.Void", true, new List<string>() { returnType }));
-                    _implementedMethods.Add(_parentClassAnalyzer._assemblyName, typeDict);
+                    _implementedMethods.Add(_parentClassAnalyzer.AssemblyName, typeDict);
                 }
             }
             return new Tuple<AccessModifierEnum, AccessModifierEnum>(AccessModifierEnum.PUBLIC, AccessModifierEnum.PUBLIC);
@@ -219,7 +207,7 @@ namespace StubGenerator.Common.Analyzer
 
         private TypeReference GetInterfaceImplementedByParentFromFullName(string interfaceFullName)
         {
-            foreach (TypeReference type in _parentClassAnalyzer._implementedInterfaces)
+            foreach (TypeReference type in _parentClassAnalyzer.ImplementedInterfaces)
             {
                 if (type.FullName == interfaceFullName)
                 {
@@ -255,11 +243,11 @@ namespace StubGenerator.Common.Analyzer
                 {
                     string interfaceAssemblyName = interfaceWhereMethodIsDefined.Scope.Name.Replace(".dll", "");
                     HashSet<string> interfaceMethods;
-                    if (ClassAnalyzer.analyzeHelpher._coreSupportedMethods.ContainsType(interfaceWhereMethodIsDefined.Name, interfaceWhereMethodIsDefined.Namespace))
+                    if (ClassAnalyzer.AnalyzeHelper.CoreSupportedMethods.ContainsType(interfaceWhereMethodIsDefined.Name, interfaceWhereMethodIsDefined.Namespace))
                     {
                         isExplicitlyImplemented = true;
                     }
-                    else if (ClassAnalyzer.analyzeHelpher.IsTypeSupported(interfaceWhereMethodIsDefined))
+                    else if (ClassAnalyzer.AnalyzeHelper.IsTypeSupported(interfaceWhereMethodIsDefined))
                     {
                         //TODO : check if method is supported
                         isExplicitlyImplemented = true;
@@ -272,7 +260,7 @@ namespace StubGenerator.Common.Analyzer
                         }
                         else
                         {
-                            if (_parentClassAnalyzer._additionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
+                            if (_parentClassAnalyzer.AdditionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
                             {
                                 isExplicitlyImplemented = interfaceMethods.Contains(methodName);
                             }
@@ -284,7 +272,7 @@ namespace StubGenerator.Common.Analyzer
                     }
                     else
                     {
-                        if (_parentClassAnalyzer._additionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
+                        if (_parentClassAnalyzer.AdditionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
                         {
                             isExplicitlyImplemented = interfaceMethods.Contains(methodName);
                         }
@@ -313,11 +301,6 @@ namespace StubGenerator.Common.Analyzer
         /// <returns></returns>
         public void Run()
         {
-            if (!_isInitialized)
-            {
-                throw new Exception("MethodAnalyzer must be initialized. Please call Init() first.");
-            }
-
             if (CanWorkOnElement())
             {
                 _isMethodOrPropertyOrEvent = IsMethodOrPropertyOrEvent(Element);
@@ -482,19 +465,18 @@ namespace StubGenerator.Common.Analyzer
         private bool AddDependencyPropertyIfDefined(MemberReference member, out string dependencyPropertyNameIfAny)
         {
             dependencyPropertyNameIfAny = null;
-            FieldDefinition dependencyPropertyIfAny = null;
+            FieldDefinition dependencyPropertyIfAny;
             if(member is MethodDefinition)
             {
                 MethodDefinition method = (MethodDefinition)member;
-                TypeReference dependencyPropertyTypeIfAny;
-                if(CanMethodBeADependencyPropertyAccessor(method, out dependencyPropertyTypeIfAny))
+                if(CanMethodBeADependencyPropertyAccessor(method, out TypeReference dependencyPropertyTypeIfAny))
                 {
                     string nameOfField = method.Name.Substring(3) + "Property";
                     if(_parentClassAnalyzer.TryGetDependencyPropertyFromFieldName(nameOfField, method.DeclaringType, out dependencyPropertyIfAny))
                     {
                         dependencyPropertyNameIfAny = nameOfField;
                         _parentClassAnalyzer.AddUsing("System.Windows");
-                        _parentClassAnalyzer.AddField(dependencyPropertyIfAny, isDependencyProperty: true, isAttachedProperty: true, dependencyPropertyTypeIfAny: dependencyPropertyTypeIfAny, isStatic: true, attachedPropertyNameIfAny: nameOfField);
+                        _parentClassAnalyzer.AddField(dependencyPropertyIfAny, true, true, dependencyPropertyTypeIfAny, nameOfField);
                         return true;
                     }
                 }
@@ -507,7 +489,7 @@ namespace StubGenerator.Common.Analyzer
                 {
                     dependencyPropertyNameIfAny = nameOfField;
                     _parentClassAnalyzer.AddUsing("System.Windows");
-                    _parentClassAnalyzer.AddField(dependencyPropertyIfAny, isDependencyProperty: true, isAttachedProperty: false, dependencyPropertyTypeIfAny:property.PropertyType, isStatic: true, attachedPropertyNameIfAny: nameOfField);
+                    _parentClassAnalyzer.AddField(dependencyPropertyIfAny, true, false, property.PropertyType, nameOfField);
                     return true;
                 }
             }

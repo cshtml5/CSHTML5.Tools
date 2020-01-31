@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -25,7 +22,31 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.Xaml.dll.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.Xml.dll.dll"),
             };
-            Initialize();
+            
+            foreach (string assembly in _coreAssembliesPaths)
+            {
+                AssemblyDefinition coreAssembly = CompatibilityAnalyzer.LoadAssembly(assembly);
+                FillMapOfXmlNsToCsNs(coreAssembly);
+                //now we go through all the types of this assembly and remember all their public methods:
+                foreach (TypeDefinition type in AnalyzeHelper.GetAllTypesDefinedInAssembly(coreAssembly))
+                {
+                    bool hasPublicMethods = false;
+                    string baseTypeName = type.BaseType != null ? type.BaseType.Name : null;
+                    string baseTypeNamespace = type.BaseType != null ? type.BaseType.Namespace : null;
+                    foreach (MethodDefinition method in AnalyzeHelper.GetAllMethodsDefinedInType(type))
+                    {
+                        if (method.IsPublic || method.IsFamily) //note: we only add the public methods because those are the only ones the user can use.
+                        {
+                            hasPublicMethods = true;
+                            Add(type.Namespace, type.Name, baseTypeNamespace, baseTypeName, method.Name);
+                        }
+                    }
+                    if (!hasPublicMethods)
+                    {
+                        Add(type.Namespace, type.Name, baseTypeNamespace, baseTypeName, null);
+                    }
+                }
+            }
         }
 
         Dictionary<string, Dictionary<string, CoreSupportedMethodTypeItem>> _items = new Dictionary<string, Dictionary<string, CoreSupportedMethodTypeItem>>();
@@ -116,34 +137,6 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             _namespacesMap.Add(attribute.ConstructorArguments[0].Value.ToString(), new HashSet<string>());
                         }
                         _namespacesMap[attribute.ConstructorArguments[0].Value.ToString()].Add(attribute.ConstructorArguments[1].Value.ToString());
-                    }
-                }
-            }
-        }
-
-        void Initialize()
-        {
-            foreach (string assembly in _coreAssembliesPaths)
-            {
-                AssemblyDefinition coreAssembly = CompatibilityAnalyzer.LoadAssembly(assembly);
-                FillMapOfXmlNsToCsNs(coreAssembly);
-                //now we go through all the types of this assembly and remember all their public methods:
-                foreach (TypeDefinition type in AnalyzeHelper.GetAllTypesDefinedInAssembly(coreAssembly))
-                {
-                    bool hasPublicMethods = false;
-                    string baseTypeName = type.BaseType != null ? type.BaseType.Name : null;
-                    string baseTypeNamespace = type.BaseType != null ? type.BaseType.Namespace : null;
-                    foreach (MethodDefinition method in AnalyzeHelper.GetAllMethodsDefinedInType(type))
-                    {
-                        if (method.IsPublic || method.IsFamily) //note: we only add the public methods because those are the only ones the user can use.
-                        {
-                            hasPublicMethods = true;
-                            Add(type.Namespace, type.Name, baseTypeNamespace, baseTypeName, method.Name);
-                        }
-                    }
-                    if (!hasPublicMethods)
-                    {
-                        Add(type.Namespace, type.Name, baseTypeNamespace, baseTypeName, null);
                     }
                 }
             }
