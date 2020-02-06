@@ -520,7 +520,17 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 string[] splittedTargetTypeValue = attributeValue.Split(':');
                 attributeTypeAndPropertyName = splittedTargetTypeValue[1];
-                AttributeNamespaceName = attribute.Parent.GetNamespaceOfPrefix(splittedTargetTypeValue[0]).NamespaceName;
+                var namespaceOfPrefix = attribute.Parent.GetNamespaceOfPrefix(splittedTargetTypeValue[0]);
+                if (namespaceOfPrefix != null)
+                {
+                    AttributeNamespaceName = namespaceOfPrefix.NamespaceName;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("WARNING: Using the default namespace because could not find the namespace that corresponds to the following prefix: " + attributeValue);
+                    attributeTypeAndPropertyName = splittedTargetTypeValue[1];
+                    AttributeNamespaceName = attribute.Parent.GetDefaultNamespace().NamespaceName;
+                }
             }
             else
             {
