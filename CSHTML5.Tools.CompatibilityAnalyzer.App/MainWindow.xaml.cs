@@ -36,6 +36,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         {
             InitializeComponent();
 
+#if SAVE_CSV_DOCUMENT
             // Initialize the output CSV file path:
             string csvFileName = "SL Migration Analysis - "
                     + DateTime.Now.Year.ToString() + "-"
@@ -43,7 +44,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                     + DateTime.Now.Day.ToString() + " "
                     + DateTime.Now.Hour.ToString() + "-"
                     + DateTime.Now.Minute.ToString()
-                    + ".xlsx";
+                    + ".csv";
             string outputCsvFolderPath = Configuration.GeneratedFilesFolderPath;
             if (!string.IsNullOrEmpty(outputCsvFolderPath))
             {
@@ -56,7 +57,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 outputCsvFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             }
+
             OutputCsvFilePathTextBox.Text = System.IO.Path.Combine(outputCsvFolderPath, csvFileName);
+#endif
 
             // Initialize the output Excel file path:
             string excelFileName = "SL Migration Analysis - "

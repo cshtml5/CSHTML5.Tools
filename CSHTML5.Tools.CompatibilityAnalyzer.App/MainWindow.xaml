@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" SizeToContent="WidthAndHeight" MinWidth="500" MaxWidth="1000">
     <StackPanel Margin="10">
-        <TextBlock Text="Output CSV file:" Margin="0,10,0,0"/>
-        <TextBox x:Name="OutputCsvFilePathTextBox" Text="-- initialized in constructor --"/>
+        <!--<TextBlock Text="Output CSV file:" Margin="0,10,0,0"/>
+        <TextBox x:Name="OutputCsvFilePathTextBox" Text="initialized in constructor"/>-->
 
         <TextBlock Text="Output Excel file:" Margin="0,10,0,0"/>
         <TextBox x:Name="OutputExcelFilePathTextBox" Text="-- initialized in constructor --"/>
