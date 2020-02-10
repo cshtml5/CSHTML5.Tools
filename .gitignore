@@ -346,3 +346,7 @@ healthchecksdb
 ToAnalyze/input/*
 ToAnalyze/output/*
 ToAnalyze/references/*
+ToMerge/backup/*
+ToMerge/Dummy/*
+ToMerge/Generated/*
+ToMerge/Generated Full/*

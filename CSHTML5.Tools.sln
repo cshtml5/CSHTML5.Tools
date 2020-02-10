@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.AssemblyAnaly
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.CompatibilityAnalyzer.App", "CSHTML5.Tools.CompatibilityAnalyzer.App\CSHTML5.Tools.CompatibilityAnalyzer.App.csproj", "{99771B41-0FCF-46A7-AC96-ED557EC05DD6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.StubMerger", "CSHTML5.Tools.StubMerger\CSHTML5.Tools.StubMerger.csproj", "{4307923E-14ED-410A-854C-0032528895AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4307923E-14ED-410A-854C-0032528895AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4307923E-14ED-410A-854C-0032528895AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4307923E-14ED-410A-854C-0032528895AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4307923E-14ED-410A-854C-0032528895AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
