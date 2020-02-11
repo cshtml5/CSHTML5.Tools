@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSHTML5.Tools.StubMerger
 {
@@ -52,9 +56,91 @@ namespace CSHTML5.Tools.StubMerger
 			}
 		}
 
-		private static void MergeStubs(ClassPart class1, ClassPart class2)
+		/// <summary>
+		/// Merge the generated stub <see cref="ClassPart"/> with the existing stub <see cref="ClassPart"/>
+		/// </summary>
+		/// <param name="generated">The generated stub <see cref="ClassPart"/></param>
+		/// <param name="existing">The existing stub <see cref="ClassPart"/></param>
+		private static void MergeStubs(ClassPart generated, ClassPart existing)
 		{
-			//TODO
+			CompilationUnitSyntax rootGenerated = CSharpSyntaxTree.ParseText(File.ReadAllText(generated.FullPath)).GetCompilationUnitRoot();
+			CompilationUnitSyntax rootExisting = CSharpSyntaxTree.ParseText(File.ReadAllText(existing.FullPath)).GetCompilationUnitRoot();
+			
+			// Add generated namespaces to the existing class file
+			foreach (UsingDirectiveSyntax node in rootGenerated.Usings)
+			{
+				if (!rootExisting.Usings.Any(u => u.IsEquivalentTo(node)))
+					rootExisting = rootExisting.AddUsings(node);
+			}
+
+			NamespaceDeclarationSyntax namespaceGenerated = (NamespaceDeclarationSyntax) rootGenerated.Members[0];
+			ClassDeclarationSyntax classGenerated = (ClassDeclarationSyntax) namespaceGenerated.Members[0];
+			
+			NamespaceDeclarationSyntax namespaceExisting = (NamespaceDeclarationSyntax) rootExisting.Members[0];
+			ClassDeclarationSyntax classExisting = (ClassDeclarationSyntax) namespaceExisting.Members[0];
+
+			// Add generated attributes to the existing class
+			foreach (AttributeListSyntax node in classGenerated.AttributeLists)
+			{
+				if (!classExisting.AttributeLists.Any(u => u.IsEquivalentTo(node)))
+					classExisting = classExisting.AddAttributeLists(node);
+			}
+			
+			// Collect and group members together
+			List<MemberDeclarationSyntax> fields = new List<MemberDeclarationSyntax>();
+			List<MemberDeclarationSyntax> properties = new List<MemberDeclarationSyntax>();
+			List<MemberDeclarationSyntax> constructors = new List<MemberDeclarationSyntax>();
+			List<MemberDeclarationSyntax> methods = new List<MemberDeclarationSyntax>();
+			List<MemberDeclarationSyntax> others = new List<MemberDeclarationSyntax>();
+			
+			fields.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.FieldDeclaration));
+			fields.AddRange(classGenerated.Members.Where(m =>
+				m.Kind() == SyntaxKind.FieldDeclaration &&
+				!fields.Any(m.IsSignatureEqual)));
+			
+			properties.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.PropertyDeclaration));
+			properties.AddRange(classGenerated.Members.Where(m =>
+				m.Kind() == SyntaxKind.PropertyDeclaration &&
+				!properties.Any(m.IsSignatureEqual)));
+			
+			constructors.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.ConstructorDeclaration));
+			constructors.AddRange(classGenerated.Members.Where(m =>
+				m.Kind() == SyntaxKind.ConstructorDeclaration &&
+				!constructors.Any(m2 => m2.IsEquivalentTo(m))));
+			
+			methods.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.MethodDeclaration));
+			methods.AddRange(classGenerated.Members.Where(m =>
+				m.Kind() == SyntaxKind.MethodDeclaration &&
+				!methods.Any(m.IsSignatureEqual)));
+			
+			SyntaxKind[] alreadyTreatedMembers = {
+				SyntaxKind.FieldDeclaration,
+				SyntaxKind.PropertyDeclaration,
+				SyntaxKind.ConstructorDeclaration,
+				SyntaxKind.MethodDeclaration,
+			};
+			
+			others.AddRange(classExisting.Members.Where(m => !alreadyTreatedMembers.Contains(m.Kind())));
+			others.AddRange(classGenerated.Members.Where(m =>
+				!alreadyTreatedMembers.Contains(m.Kind()) &&
+				!others.Any(m2 => m2.IsEquivalentTo(m))));
+
+			// Apply collected members
+			classExisting = classExisting
+				.WithMembers(new SyntaxList<MemberDeclarationSyntax>(fields))
+				.AddMembers(properties.ToArray())
+				.AddMembers(constructors.ToArray())
+				.AddMembers(methods.ToArray())
+				.AddMembers(others.ToArray());
+
+			// Add the new class to the namespace block
+			namespaceExisting = namespaceExisting.WithMembers(new SyntaxList<MemberDeclarationSyntax>(classExisting));
+			
+			// Add the modified namespace to the root
+			rootExisting = rootExisting.WithMembers(new SyntaxList<MemberDeclarationSyntax>(namespaceExisting));
+			
+			// Write the merged source code to the WORKINPROGRESS file
+			File.WriteAllText(existing.FullPath, rootExisting.NormalizeWhitespace("\t", "\n").ToFullString());
 		}
 
 		private static Namespace CreateNamespace(string namespaceRoot, Namespace namespaces)
