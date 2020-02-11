@@ -30,17 +30,17 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
             // WTF WHY IS THIS BLOCK BELLOW NEVER USED PLEASE SOMEONE HELP ME
             
-            // List<Tuple<string, List<string>>> supportedMethods = GetSupportedMethods(mscorlibImpInfoFile);
-            //
-            // // Add additional supported methods that are not defined in the proxies (such as "Int32.Parse"):
-            // foreach (Tuple<string, List<string>> typeToMethods in supportedMethods)
-            // {
-            //     HashSet<string> typeMethods = GetReferenceToListOfSupportedMethodsForAGivenTypeName(typeToMethods.Item1);
-            //     foreach (string methodName in typeToMethods.Item2)
-            //     {
-            //         typeMethods.Add(methodName);
-            //     }
-            // }
+            List<Tuple<string, List<string>>> supportedMethods = GetSupportedMethods(mscorlibImpInfoFile);
+            
+            // Add additional supported methods that are not defined in the proxies (such as "Int32.Parse"):
+            foreach (Tuple<string, List<string>> typeToMethods in supportedMethods)
+            {
+                HashSet<string> typeMethods = GetReferenceToListOfSupportedMethodsForAGivenTypeName(typeToMethods.Item1);
+                foreach (string methodName in typeToMethods.Item2)
+                {
+                    typeMethods.Add(methodName);
+                }
+            }
         }
 
         /// <summary>

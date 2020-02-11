@@ -24,23 +24,12 @@ namespace CSHTML5.Tools.StubMerger
 		private static void Run(string generatedNamespacesRoot, string CSHTML5NamespacesRoot)
 		{
 			HashSet<Namespace> generatedNamespaces = Namespace.GetGeneratedNamespaces(generatedNamespacesRoot);
-			HashSet<Namespace> existingNamespaces = Namespace.GetExistingNamespaces(CSHTML5NamespacesRoot);
 			
 			// For each generated namespace
 			foreach (Namespace generatedNamespace in generatedNamespaces)
 			{
 				// Retrieve the CSHTML5-equivalent of the generated namespace
-				Namespace existingNamespace = existingNamespaces.First(ns => ns.Name == generatedNamespace.Name);
-				
-				// If CSHTML5 doesn't have this namespace yet, create it
-				if (existingNamespace == null)
-				{
-					existingNamespace = CreateNamespace(CSHTML5NamespacesRoot, generatedNamespace);
-					existingNamespaces.Add(existingNamespace);
-				}
-
-				// Make sure the WORKINPROGRESS folder exists in the CSHTML5 namespace, and create it if it doesn't.
-				Directory.CreateDirectory(Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS"));
+				Namespace existingNamespace = Namespace.GetExistingNamespace(CSHTML5NamespacesRoot, generatedNamespace.Name);
 
 				// Copy or merge the generated stub, depending on the situtation
 				foreach (ClassPart stubClassPart in generatedNamespace.ClassParts)
@@ -55,8 +44,8 @@ namespace CSHTML5.Tools.StubMerger
 					else // Otherwise, simply copy it
 					{
 						File.Copy(
-							Path.Combine(generatedNamespacesRoot, generatedNamespace.Name, stubClassPart.FileName),
-							Path.Combine(CSHTML5NamespacesRoot, existingNamespace.Name, "WORKINPROGRESS", stubClassPart.FileName)
+							Path.Combine(generatedNamespace.FullPath, stubClassPart.FileName),
+							Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS", stubClassPart.FileName)
 							);
 					}
 				}
