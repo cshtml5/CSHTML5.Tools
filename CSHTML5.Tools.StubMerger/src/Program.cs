@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -92,23 +93,43 @@ namespace CSHTML5.Tools.StubMerger
 
 			fields.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.FieldDeclaration));
 			fields.AddRange(classGenerated.Members.Where(m =>
-				m.Kind() == SyntaxKind.FieldDeclaration &&
-				!fields.Any(m.IsSignatureEqual)));
+			{
+				if (m.Kind() != SyntaxKind.FieldDeclaration) return false;
+				if (!fields.Any(m.IsSignatureEqual)) return true;
+
+				Console.WriteLine($"Field is already present:\n{m.ToString()}\n");
+				return false;
+			}));
 
 			properties.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.PropertyDeclaration));
 			properties.AddRange(classGenerated.Members.Where(m =>
-				m.Kind() == SyntaxKind.PropertyDeclaration &&
-				!properties.Any(m.IsSignatureEqual)));
+			{
+				if (m.Kind() != SyntaxKind.PropertyDeclaration) return false;
+				if (!properties.Any(m.IsSignatureEqual)) return true;
+
+				Console.WriteLine($"Property is already present:\n{m.ToString()}\n");
+				return false;
+			}));
 
 			constructors.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.ConstructorDeclaration));
 			constructors.AddRange(classGenerated.Members.Where(m =>
-				m.Kind() == SyntaxKind.ConstructorDeclaration &&
-				!constructors.Any(m.IsSignatureEqual)));
+			{
+				if (m.Kind() != SyntaxKind.ConstructorDeclaration) return false;
+				if (!constructors.Any(m.IsSignatureEqual)) return true;
+
+				Console.WriteLine($"Constructor is already present:\n{m.ToString()}\n");
+				return false;
+			}));
 
 			methods.AddRange(classExisting.Members.Where(m => m.Kind() == SyntaxKind.MethodDeclaration));
 			methods.AddRange(classGenerated.Members.Where(m =>
-				m.Kind() == SyntaxKind.MethodDeclaration &&
-				!methods.Any(m.IsSignatureEqual)));
+			{
+				if (m.Kind() != SyntaxKind.MethodDeclaration) return false;
+				if (!methods.Any(m.IsSignatureEqual)) return true;
+
+				Console.WriteLine($"Method is already present:\n{m.ToString()}\n");
+				return false;
+			}));
 
 			SyntaxKind[] alreadyTreatedMembers =
 			{
@@ -120,8 +141,13 @@ namespace CSHTML5.Tools.StubMerger
 
 			others.AddRange(classExisting.Members.Where(m => !alreadyTreatedMembers.Contains(m.Kind())));
 			others.AddRange(classGenerated.Members.Where(m =>
-				!alreadyTreatedMembers.Contains(m.Kind()) &&
-				!others.Any(m2 => m2.IsEquivalentTo(m))));
+			{
+				if (alreadyTreatedMembers.Contains(m.Kind())) return false;
+				if (!others.Any(m2 => m2.IsEquivalentTo(m))) return true;
+
+				Console.WriteLine($"Member is already present:\n{m.ToString()}\n");
+				return false;
+			}));
 
 			// Apply collected members
 			classExisting = classExisting
