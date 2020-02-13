@@ -72,10 +72,10 @@ namespace CSHTML5.Tools.StubMerger
 			}
 
 			NamespaceDeclarationSyntax namespaceGenerated = (NamespaceDeclarationSyntax) rootGenerated.Members[0];
-			ClassDeclarationSyntax classGenerated = (ClassDeclarationSyntax) namespaceGenerated.Members[0];
+			TypeDeclarationSyntax classGenerated = (TypeDeclarationSyntax) namespaceGenerated.Members[0];
 
 			NamespaceDeclarationSyntax namespaceExisting = (NamespaceDeclarationSyntax) rootExisting.Members[0];
-			ClassDeclarationSyntax classExisting = (ClassDeclarationSyntax) namespaceExisting.Members[0];
+			TypeDeclarationSyntax classExisting = (TypeDeclarationSyntax) namespaceExisting.Members[0];
 
 			// Add generated attributes to the existing class
 			foreach (AttributeListSyntax node in classGenerated.AttributeLists)
