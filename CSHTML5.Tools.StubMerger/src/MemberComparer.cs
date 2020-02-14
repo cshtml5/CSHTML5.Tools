@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSHTML5.Tools.StubMerger
@@ -20,7 +22,7 @@ namespace CSHTML5.Tools.StubMerger
 		/// <exception cref="ArgumentException">Members are not the same type or the type is not suported.</exception>
 		public static bool IsSignatureEqual(this MemberDeclarationSyntax member1, MemberDeclarationSyntax member2)
 		{
-			if (member1.Kind() != member2.Kind()) throw new ArgumentException("Members are not the same type.");
+			if (member1.Kind() != member2.Kind()) throw new ArgumentException($"Members are not the same type:\nmember1: {member1.Kind()}\nmember2: {member2.Kind()}");
 
 			if (member1 is PropertyDeclarationSyntax property1 && member2 is PropertyDeclarationSyntax property2)
 			{
@@ -42,7 +44,62 @@ namespace CSHTML5.Tools.StubMerger
 				return IsConstructorSignatureEqual(const1, const2);
 			}
 
+			if (member1 is TypeDeclarationSyntax type1 && member2 is TypeDeclarationSyntax type2)
+			{
+				return IsTypeSignatureEqual(type1, type2);
+			}
+
+			if (member1 is EnumDeclarationSyntax enum1 && member2 is EnumDeclarationSyntax enum2)
+			{
+				return IsEnumSignatureEqual(enum1, enum2);
+			}
+
 			throw new ArgumentException("Members type comparison isn't implemented");
+		}
+
+		/// <summary>
+		/// Checks for enum signature equality.
+		/// Doesn't handle generic types the same way <see cref="IsMethodSignatureEqual"/> does.
+		/// </summary>
+		/// <param name="enum1">First enum</param>
+		/// <param name="enum2">Second enum</param>
+		/// <returns>The result of the signature comparison.</returns>
+		private static bool IsEnumSignatureEqual(EnumDeclarationSyntax enum1, EnumDeclarationSyntax enum2)
+		{
+			bool nameEquals = enum1.Identifier.Text == enum2.Identifier.Text;
+
+			return nameEquals;
+		}
+
+		/// <summary>
+		/// Checks for type signature equality.
+		/// Doesn't handle generic types the same way <see cref="IsMethodSignatureEqual"/> does.
+		/// </summary>
+		/// <param name="type1">First type</param>
+		/// <param name="type2">Second type</param>
+		/// <returns>The result of the signature comparison.</returns>
+		private static bool IsTypeSignatureEqual(TypeDeclarationSyntax type1, TypeDeclarationSyntax type2)
+		{
+			bool nameEquals = type1.Identifier.Text == type2.Identifier.Text;
+			bool typeEquals = type1.Keyword.Text == type2.Keyword.Text;
+			bool modifiersEquals = true;
+
+			List<SyntaxToken> orderedMembers1 = type1.Modifiers.OrderBy(m => m.Text).ToList();
+			List<SyntaxToken> orderedMembers2 = type2.Modifiers.OrderBy(m => m.Text).ToList();
+
+			if (orderedMembers1.Count == orderedMembers2.Count)
+			{
+				if (orderedMembers1.Where((t, i) => t.Text != orderedMembers2[i].Text).Any())
+				{
+					modifiersEquals = false;
+				}
+			}
+			else
+			{
+				modifiersEquals = false;
+			}
+			
+			return nameEquals && typeEquals && modifiersEquals;
 		}
 
 		/// <summary>
