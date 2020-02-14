@@ -46,8 +46,7 @@ namespace CSHTML5.Tools.StubMerger
 					}
 					else
 					{
-						Console.WriteLine($"Enum {((EnumDeclarationSyntax)existingMember).Identifier.Text} is already present in file {existing.FileName} and has been replaced by the generated one.\n");
-						mergedMembers[mergedMembers.IndexOf(existingMember)] = generatedMember;
+						Console.WriteLine($"Enum {((EnumDeclarationSyntax)existingMember).Identifier.Text} is already present in file {existing.FileName}.\n");
 					}
 				}
 				else
