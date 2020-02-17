@@ -93,6 +93,7 @@ namespace CSHTML5.Tools.StubMerger
 			// Collect and group members together
 			List<MemberDeclarationSyntax> fields = new List<MemberDeclarationSyntax>();
 			List<MemberDeclarationSyntax> properties = new List<MemberDeclarationSyntax>();
+			List<MemberDeclarationSyntax> events = new List<MemberDeclarationSyntax>();
 			List<MemberDeclarationSyntax> constructors = new List<MemberDeclarationSyntax>();
 			List<MemberDeclarationSyntax> methods = new List<MemberDeclarationSyntax>();
 			List<MemberDeclarationSyntax> others = new List<MemberDeclarationSyntax>();
@@ -114,6 +115,16 @@ namespace CSHTML5.Tools.StubMerger
 				if (!properties.Any(m.IsSignatureEqual)) return true;
 
 				Console.WriteLine($"Property is already present in type {existingType.Identifier.Text}:\n{m.ToString()}\n");
+				return false;
+			}));
+
+			events.AddRange(existingType.Members.Where(m => m.Kind() == SyntaxKind.EventDeclaration));
+			events.AddRange(generatedType.Members.Where(m =>
+			{
+				if (m.Kind() != SyntaxKind.EventDeclaration) return false;
+				if (!events.Any(m.IsSignatureEqual)) return true;
+
+				Console.WriteLine($"Event is already present in type {existingType.Identifier.Text}:\n{m.ToString()}\n");
 				return false;
 			}));
 
@@ -143,6 +154,7 @@ namespace CSHTML5.Tools.StubMerger
 				SyntaxKind.PropertyDeclaration,
 				SyntaxKind.ConstructorDeclaration,
 				SyntaxKind.MethodDeclaration,
+				SyntaxKind.EventDeclaration,
 			};
 
 			others.AddRange(existingType.Members.Where(m => !alreadyTreatedMembers.Contains(m.Kind())));
@@ -159,6 +171,7 @@ namespace CSHTML5.Tools.StubMerger
 			return existingType
 				.WithMembers(new SyntaxList<MemberDeclarationSyntax>(fields))
 				.AddMembers(properties.ToArray())
+				.AddMembers(events.ToArray())
 				.AddMembers(constructors.ToArray())
 				.AddMembers(methods.ToArray())
 				.AddMembers(others.ToArray());

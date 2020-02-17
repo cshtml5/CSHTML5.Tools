@@ -54,7 +54,26 @@ namespace CSHTML5.Tools.StubMerger
 				return IsEnumSignatureEqual(enum1, enum2);
 			}
 
+			if (member1 is EventDeclarationSyntax event1 && member2 is EventDeclarationSyntax event2)
+			{
+				return IsEventSignatureEqual(event1, event2);
+			}
+
 			throw new ArgumentException("Members type comparison isn't implemented");
+		}
+
+		/// <summary>
+		/// Checks for event signature equality.
+		/// Doesn't handle generic types the same way <see cref="IsMethodSignatureEqual"/> does.
+		/// </summary>
+		/// <param name="event1">First event</param>
+		/// <param name="event2">Second event</param>
+		/// <returns>The result of the signature comparison.</returns>
+		private static bool IsEventSignatureEqual(EventDeclarationSyntax event1, EventDeclarationSyntax event2)
+		{
+			bool nameEqual = event1.Identifier.ValueText == event2.Identifier.ValueText;
+
+			return nameEqual;
 		}
 
 		/// <summary>
