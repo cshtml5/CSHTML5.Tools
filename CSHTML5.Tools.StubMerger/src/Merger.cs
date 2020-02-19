@@ -17,8 +17,12 @@ namespace CSHTML5.Tools.StubMerger
 		/// <param name="existing">The existing stub <see cref="ClassPart"/></param>
 		public static void MergeFiles(ClassPart generated, ClassPart existing)
 		{
-			CompilationUnitSyntax rootGenerated = CSharpSyntaxTree.ParseText(File.ReadAllText(generated.FullPath)).GetCompilationUnitRoot();
-			CompilationUnitSyntax rootExisting = CSharpSyntaxTree.ParseText(File.ReadAllText(existing.FullPath)).GetCompilationUnitRoot();
+			CSharpParseOptions options = CSharpParseOptions.Default.WithPreprocessorSymbols("CSHTML5BLAZOR", "CSHTML5NETSTANDARD", "MIGRATION", "WORKINPROGRESS", "OPENSILVER");
+			
+			CompilationUnitSyntax rootGenerated = CSharpSyntaxTree.ParseText(File.ReadAllText(generated.FullPath), options).GetCompilationUnitRoot();
+			CompilationUnitSyntax rootExisting = CSharpSyntaxTree.ParseText(File.ReadAllText(existing.FullPath), options).GetCompilationUnitRoot();
+
+			if (rootGenerated.Members.Count == 0 || rootExisting.Members.Count == 0) return;
 
 			// Add generated namespaces to the existing class file
 			foreach (UsingDirectiveSyntax node in rootGenerated.Usings)
@@ -30,7 +34,7 @@ namespace CSHTML5.Tools.StubMerger
 			// Getting the namespace block
 			NamespaceDeclarationSyntax namespaceGenerated = (NamespaceDeclarationSyntax) rootGenerated.Members[0];
 			NamespaceDeclarationSyntax namespaceExisting = (NamespaceDeclarationSyntax) rootExisting.Members[0];
-
+			
 			// For each type (class, interface, struct or enum) in the generated namespace block, merging (or copying) to the existing namespace block
 			List<MemberDeclarationSyntax> mergedMembers = new List<MemberDeclarationSyntax>(namespaceExisting.Members);
 			foreach (MemberDeclarationSyntax generatedMember in namespaceGenerated.Members)
