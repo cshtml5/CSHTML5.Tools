@@ -13,14 +13,15 @@ namespace CSHTML5.Tools.StubMerger
 		private static void Main(string[] args)
 		{
 			// ============ INPUTS ============
-			string generatednamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
+			string generatedNamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
 			string CSHTML5Path = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Dummy\CSHTML5";
+			// string generatedNamespacesRoot = @"C:\Projects\TelerikUIForOpenSilver\OpenSilverExtensions\OSExtensions";
 			// string CSHTML5Path = @"C:\DotNetForHtml5\DotNetForHtml5\_GitHub\CSHTML5";
 			// ============ /INPUTS ============
 
 			string CSHTML5NamespacesRoot = Path.Combine(CSHTML5Path, @"src\CSHTML5.Runtime");
 
-			Run(generatednamespacesRoot, CSHTML5NamespacesRoot);
+			Run(generatedNamespacesRoot, CSHTML5NamespacesRoot);
 		}
 
 		private static void Run(string generatedNamespacesRoot, string CSHTML5NamespacesRoot)
@@ -31,7 +32,19 @@ namespace CSHTML5.Tools.StubMerger
 			foreach (Namespace generatedNamespace in generatedNamespaces)
 			{
 				// Retrieve the CSHTML5-equivalent of the generated namespace
-				Namespace existingNamespace = Namespace.GetExistingNamespace(CSHTML5NamespacesRoot, generatedNamespace.Name);
+				// If the generate namespace starts with System.Windows and a Windows.UI.Xaml-equivalent namespace exists in CSHTML5, work with this one
+				Namespace existingNamespace;
+				if (generatedNamespace.Name.StartsWith("System.Windows") &&
+				    Namespace.Exists(CSHTML5NamespacesRoot, generatedNamespace.Name.Replace("System.Windows", "Windows.UI.Xaml")))
+				{
+					existingNamespace = Namespace.GetOrCreateExistingNamespace(
+						CSHTML5NamespacesRoot,
+						generatedNamespace.Name.Replace("System.Windows", "Windows.UI.Xaml"));
+				}
+				else
+				{
+					existingNamespace = Namespace.GetOrCreateExistingNamespace(CSHTML5NamespacesRoot, generatedNamespace.Name);
+				}
 
 				// Copy or merge the generated stub, depending on the situtation
 				foreach (ClassPart stubClassPart in generatedNamespace.ClassParts)
