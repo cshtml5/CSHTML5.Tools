@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSHTML5.Tools.StubMerger
@@ -9,57 +10,75 @@ namespace CSHTML5.Tools.StubMerger
 	public static class MemberComparer
 	{
 		/// <summary>
-		/// <para>Performs a signature comparison on supported member types.</para>
+		/// <para>Performs a signature comparison on supported node types.</para>
 		/// <para>Supported types are:
 		/// <br/><see cref="PropertyDeclarationSyntax"/>
 		/// <br/><see cref="MethodDeclarationSyntax"/>
 		/// <br/><see cref="FieldDeclarationSyntax"/>
 		/// <br/><see cref="ConstructorDeclarationSyntax"/></para>
 		/// </summary>
-		/// <param name="member1">First member</param>
-		/// <param name="member2">Second member</param>
+		/// <param name="node1">First node</param>
+		/// <param name="node2">Second node</param>
 		/// <returns>The result of the signature comparison.</returns>
-		/// <exception cref="ArgumentException">Members are not the same type or the type is not suported.</exception>
-		public static bool IsSignatureEqual(this MemberDeclarationSyntax member1, MemberDeclarationSyntax member2)
+		/// <exception cref="ArgumentException">Nodes are not the same type or the type is not suported.</exception>
+		public static bool IsSignatureEqual(this CSharpSyntaxNode node1, CSharpSyntaxNode node2)
 		{
-			if (member1.Kind() != member2.Kind()) throw new ArgumentException($"Members are not the same type:\nmember1: {member1.Kind()}\nmember2: {member2.Kind()}");
+			if (node1.Kind() != node2.Kind()) throw new ArgumentException($"Nodes are not the same type:\nnode1: {node1.Kind()}\nnode2: {node2.Kind()}");
 
-			if (member1 is PropertyDeclarationSyntax property1 && member2 is PropertyDeclarationSyntax property2)
+			if (node1 is PropertyDeclarationSyntax property1 && node2 is PropertyDeclarationSyntax property2)
 			{
 				return IsPropertySignatureEqual(property1, property2);
 			}
 
-			if (member1 is MethodDeclarationSyntax method1 && member2 is MethodDeclarationSyntax method2)
+			if (node1 is MethodDeclarationSyntax method1 && node2 is MethodDeclarationSyntax method2)
 			{
 				return IsMethodSignatureEqual(method1, method2);
 			}
 
-			if (member1 is FieldDeclarationSyntax field1 && member2 is FieldDeclarationSyntax field2)
+			if (node1 is FieldDeclarationSyntax field1 && node2 is FieldDeclarationSyntax field2)
 			{
 				return IsFieldSignatureEqual(field1, field2);
 			}
 
-			if (member1 is ConstructorDeclarationSyntax const1 && member2 is ConstructorDeclarationSyntax const2)
+			if (node1 is ConstructorDeclarationSyntax const1 && node2 is ConstructorDeclarationSyntax const2)
 			{
 				return IsConstructorSignatureEqual(const1, const2);
 			}
 
-			if (member1 is TypeDeclarationSyntax type1 && member2 is TypeDeclarationSyntax type2)
+			if (node1 is TypeDeclarationSyntax type1 && node2 is TypeDeclarationSyntax type2)
 			{
 				return IsTypeSignatureEqual(type1, type2);
 			}
 
-			if (member1 is EnumDeclarationSyntax enum1 && member2 is EnumDeclarationSyntax enum2)
+			if (node1 is EnumDeclarationSyntax enum1 && node2 is EnumDeclarationSyntax enum2)
 			{
 				return IsEnumSignatureEqual(enum1, enum2);
 			}
 
-			if (member1 is EventDeclarationSyntax event1 && member2 is EventDeclarationSyntax event2)
+			if (node1 is EventDeclarationSyntax event1 && node2 is EventDeclarationSyntax event2)
 			{
 				return IsEventSignatureEqual(event1, event2);
 			}
 
-			throw new ArgumentException("Members type comparison isn't implemented");
+			if (node1 is UsingDirectiveSyntax using1 && node2 is UsingDirectiveSyntax using2)
+			{
+				return IsUsingSignatureEqual(using1, using2);
+			}
+
+			throw new ArgumentException("Nodes type comparison isn't implemented");
+		}
+
+		/// <summary>
+		/// Checks for using signature equality.
+		/// Doesn't handle generic types the same way <see cref="IsMethodSignatureEqual"/> does.
+		/// </summary>
+		/// <param name="using1">First using</param>
+		/// <param name="using2">Second using</param>
+		/// <returns>The result of the signature comparison.</returns>
+		private static bool IsUsingSignatureEqual(UsingDirectiveSyntax using1, UsingDirectiveSyntax using2)
+		{
+			bool namespaceEqual = using1.Name.ToString() == using2.Name.ToString();
+			return namespaceEqual;
 		}
 
 		/// <summary>
@@ -103,12 +122,12 @@ namespace CSHTML5.Tools.StubMerger
 			bool typeEquals = type1.Keyword.Text == type2.Keyword.Text;
 			bool modifiersEquals = true;
 
-			List<SyntaxToken> orderedMembers1 = type1.Modifiers.OrderBy(m => m.Text).ToList();
-			List<SyntaxToken> orderedMembers2 = type2.Modifiers.OrderBy(m => m.Text).ToList();
+			List<SyntaxToken> orderedModifiers1 = type1.Modifiers.OrderBy(m => m.Text).ToList();
+			List<SyntaxToken> orderedModifiers2 = type2.Modifiers.OrderBy(m => m.Text).ToList();
 
-			if (orderedMembers1.Count == orderedMembers2.Count)
+			if (orderedModifiers1.Count == orderedModifiers2.Count)
 			{
-				if (orderedMembers1.Where((t, i) => t.Text != orderedMembers2[i].Text).Any())
+				if (orderedModifiers1.Where((t, i) => t.Text != orderedModifiers2[i].Text).Any())
 				{
 					modifiersEquals = false;
 				}

@@ -25,10 +25,10 @@ namespace CSHTML5.Tools.StubMerger
 			if (rootGenerated.Members.Count == 0 || rootExisting.Members.Count == 0) return;
 
 			// Add generated namespaces to the existing class file
-			foreach (UsingDirectiveSyntax node in rootGenerated.Usings)
+			foreach (UsingDirectiveSyntax using1 in rootGenerated.Usings)
 			{
-				if (!rootExisting.Usings.Any(u => u.IsEquivalentTo(node)))
-					rootExisting = rootExisting.AddUsings(node);
+				if (!rootExisting.Usings.Any(using1.IsSignatureEqual))
+					rootExisting = rootExisting.AddUsings(using1);
 			}
 
 			// Getting the namespace block
