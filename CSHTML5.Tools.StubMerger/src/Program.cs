@@ -13,20 +13,23 @@ namespace CSHTML5.Tools.StubMerger
 		private static void Main(string[] args)
 		{
 			// ============ INPUTS ============
-			string generatedNamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
-			string CSHTML5Path = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Dummy\CSHTML5";
-			// string generatedNamespacesRoot = @"C:\Projects\TelerikUIForOpenSilver\OpenSilverExtensions\OSExtensions";
-			// string CSHTML5Path = @"C:\DotNetForHtml5\DotNetForHtml5\_GitHub\CSHTML5";
+			// string generatedNamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
+			// string CSHTML5Path = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Dummy\CSHTML5";
+			string generatedNamespacesRoot = @"C:\Projects\TelerikUIForOpenSilver\OpenSilverExtensions\OSExtensions";
+			string CSHTML5Path = @"C:\DotNetForHtml5\DotNetForHtml5\_GitHub\CSHTML5";
+			string includeLogPath = @"C:\Projects\2019\CSHTML5.Tools\toMerge\include.log";
 			// ============ /INPUTS ============
 
 			string CSHTML5NamespacesRoot = Path.Combine(CSHTML5Path, @"src\CSHTML5.Runtime");
 
-			Run(generatedNamespacesRoot, CSHTML5NamespacesRoot);
+			Run(generatedNamespacesRoot, CSHTML5NamespacesRoot, includeLogPath);
 		}
 
-		private static void Run(string generatedNamespacesRoot, string CSHTML5NamespacesRoot)
+		private static void Run(string generatedNamespacesRoot, string CSHTML5NamespacesRoot, string includeLogPath)
 		{
 			HashSet<Namespace> generatedNamespaces = Namespace.GetGeneratedNamespaces(generatedNamespacesRoot);
+			
+			HashSet<string> includes = new HashSet<string>();
 
 			// For each generated namespace
 			foreach (Namespace generatedNamespace in generatedNamespaces)
@@ -62,9 +65,13 @@ namespace CSHTML5.Tools.StubMerger
 							Path.Combine(generatedNamespace.FullPath, stubClassPart.FileName),
 							Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS", stubClassPart.FileName)
 						);
+						
+						includes.Add($"<Compile Include=\"{Path.Combine(existingNamespace.Name, "WORKINPROGRESS", stubClassPart.FileName)}\" />");
 					}
 				}
 			}
+			
+			File.WriteAllLines(includeLogPath, includes);
 		}
 	}
 }
