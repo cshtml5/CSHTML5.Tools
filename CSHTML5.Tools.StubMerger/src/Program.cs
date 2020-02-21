@@ -12,15 +12,23 @@ namespace CSHTML5.Tools.StubMerger
 	{
 		private static void Main(string[] args)
 		{
-			// ============ INPUTS ============
-			// string generatedNamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
-			// string CSHTML5Path = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Dummy\CSHTML5";
-			string generatedNamespacesRoot = @"C:\Projects\TelerikUIForOpenSilver\OpenSilverExtensions\OSExtensions";
-			string CSHTML5Path = @"C:\DotNetForHtml5\DotNetForHtml5\_GitHub\CSHTML5";
-			string includeLogPath = @"C:\Projects\2019\CSHTML5.Tools\toMerge\include.log";
-			// ============ /INPUTS ============
+#if TESTING
+			string generatedNamespacesRoot = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Generated";
+			string CSHTML5RootPath = @"C:\Projects\2019\CSHTML5.Tools\toMerge\Dummy\CSHTML5";
+#else
+			if (args.Length < 2)
+			{
+				Console.WriteLine("\nUsage: \nCSHTML5.Tools.StubMerger.exe generatedNamespacesRoot CSHTML5RootPath\n");
+				return;
+			}
 
-			string CSHTML5NamespacesRoot = Path.Combine(CSHTML5Path, @"src\CSHTML5.Runtime");
+			string generatedNamespacesRoot = args[0];
+			string CSHTML5RootPath = args[1];
+#endif
+			
+			string includeLogPath = Path.Combine(Directory.GetCurrentDirectory(), "copy_to_csproj.log");
+
+			string CSHTML5NamespacesRoot = Path.Combine(CSHTML5RootPath, @"src\CSHTML5.Runtime");
 
 			Run(generatedNamespacesRoot, CSHTML5NamespacesRoot, includeLogPath);
 		}
@@ -36,9 +44,11 @@ namespace CSHTML5.Tools.StubMerger
 			{
 				// Retrieve the CSHTML5-equivalent of the generated namespace
 				// If the generate namespace starts with System.Windows and a Windows.UI.Xaml-equivalent namespace exists in CSHTML5, work with this one
+				bool needsRemap = generatedNamespace.Name.StartsWith("System.Windows") &&
+				                  Namespace.Exists(CSHTML5NamespacesRoot, generatedNamespace.Name.Replace("System.Windows", "Windows.UI.Xaml"));
+				
 				Namespace existingNamespace;
-				if (generatedNamespace.Name.StartsWith("System.Windows") &&
-				    Namespace.Exists(CSHTML5NamespacesRoot, generatedNamespace.Name.Replace("System.Windows", "Windows.UI.Xaml")))
+				if (needsRemap)
 				{
 					existingNamespace = Namespace.GetOrCreateExistingNamespace(
 						CSHTML5NamespacesRoot,
@@ -61,11 +71,15 @@ namespace CSHTML5.Tools.StubMerger
 					}
 					else // Otherwise, simply copy it
 					{
-						File.Copy(
-							Path.Combine(generatedNamespace.FullPath, stubClassPart.FileName),
-							Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS", stubClassPart.FileName)
-						);
-						
+						if (needsRemap)
+						{
+							Merger.FixSystemWindowsNamespace(stubClassPart, existingNamespace);
+						}
+						else
+						{
+							Merger.CopyWithWIP(stubClassPart, existingNamespace);
+						}
+
 						includes.Add($"<Compile Include=\"{Path.Combine(existingNamespace.Name, "WORKINPROGRESS", stubClassPart.FileName)}\" />");
 					}
 				}

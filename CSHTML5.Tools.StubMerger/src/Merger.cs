@@ -74,9 +74,18 @@ namespace CSHTML5.Tools.StubMerger
 
 			// Add the modified namespace to the root
 			rootExisting = rootExisting.WithMembers(new SyntaxList<MemberDeclarationSyntax>(namespaceExisting));
+			
+			string outputString = rootExisting.NormalizeWhitespace("\t", "\n").ToFullString();
 
 			// Write the merged source code to the WORKINPROGRESS file
-			File.WriteAllText(existing.FullPath, rootExisting.NormalizeWhitespace("\t", "\n").ToFullString());
+			File.WriteAllText(existing.FullPath, outputString);
+		}
+
+		private static string AddWIP(string s)
+		{
+			s = s.Insert(0, "#if WORKINPROGRESS\n");
+			s = s.Insert(s.Length, "\n#endif");
+			return s;
 		}
 		
 		/// <summary>
@@ -179,6 +188,43 @@ namespace CSHTML5.Tools.StubMerger
 				.AddMembers(constructors.ToArray())
 				.AddMembers(methods.ToArray())
 				.AddMembers(others.ToArray());
+		}
+
+		public static void FixSystemWindowsNamespace(ClassPart generated, Namespace existingNamespace)
+		{
+			CompilationUnitSyntax rootGenerated = CSharpSyntaxTree.ParseText(File.ReadAllText(generated.FullPath)).GetCompilationUnitRoot();
+
+			if (rootGenerated.Members.Count == 0) return;
+
+			// Getting the namespace block
+			NamespaceDeclarationSyntax namespaceGenerated = (NamespaceDeclarationSyntax) rootGenerated.Members[0];
+
+			
+			// Dirty hack because Roslyn is fkn overcomplicated
+			string trivia = $"#if MIGRATION\n" +
+			                $"namespace {generated.Namespace.Name}\n" +
+							$"#else\n" +
+							$"namespace {generated.Namespace.Name.Replace("System.Windows", "Windows.UI.Xaml")}\n" +
+							$"#endif\n";
+
+			namespaceGenerated = namespaceGenerated
+				.WithLeadingTrivia(SyntaxFactory.PreprocessingMessage(trivia))
+				.WithName(SyntaxFactory.ParseName("stubmerger_todelete"));
+			
+			rootGenerated = rootGenerated.WithMembers(new SyntaxList<MemberDeclarationSyntax>(namespaceGenerated));
+
+			string outputString = rootGenerated.NormalizeWhitespace("\t", "\n").ToFullString().Replace("namespace stubmerger_todelete\n", "");
+			outputString = AddWIP(outputString);
+			
+			// Write the merged source code to the WORKINPROGRESS file
+			File.WriteAllText(Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS", generated.FileName), outputString);
+		}
+
+		public static void CopyWithWIP(ClassPart generated, Namespace existingNamespace)
+		{
+			string outputString = File.ReadAllText(generated.FullPath);
+			outputString = AddWIP(outputString);
+			File.WriteAllText(Path.Combine(existingNamespace.FullPath, "WORKINPROGRESS", generated.FileName), outputString);
 		}
 	}
 }
