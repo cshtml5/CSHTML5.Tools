@@ -216,41 +216,44 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                                 //In this case we want to get the property in <Setter Property="XXXX" .../>
                                 bool? isAttachedProperty;
                                 XName setterPropertyFullName = GetSetterPropertyValueAsXName(attribute, out isAttachedProperty);
-                                string setterPropertyAssemblyName;
-                                string setterPropertyNamespaceName;
-                                GetXmlNamespaceInfo(setterPropertyFullName.NamespaceName, out setterPropertyAssemblyName, out setterPropertyNamespaceName, userAssemblyName, setterPropertyFullName.LocalName.Split('.')[0]);
+                                if (setterPropertyFullName != null)
+                                {
+                                    string setterPropertyAssemblyName;
+                                    string setterPropertyNamespaceName;
+                                    GetXmlNamespaceInfo(setterPropertyFullName.NamespaceName, out setterPropertyAssemblyName, out setterPropertyNamespaceName, userAssemblyName, setterPropertyFullName.LocalName.Split('.')[0]);
 
-                                string[] splittedSetterLocalName = setterPropertyFullName.LocalName.Split('.');
-                                if(isAttachedProperty == null)
-                                {
-                                    bool checkIsAttachedProperty = analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound)
-                                                   || analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound);
-                                    bool checkIsRegularProperty = analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "get_" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound);
-                                    if (!checkIsAttachedProperty && !checkIsRegularProperty)
+                                    string[] splittedSetterLocalName = setterPropertyFullName.LocalName.Split('.');
+                                    if (isAttachedProperty == null)
                                     {
-                                        whatToDoWhenNotSupportedMethodFound(new UnsupportedMethodInfo()
+                                        bool checkIsAttachedProperty = analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound)
+                                                       || analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound);
+                                        bool checkIsRegularProperty = analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "get_" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, false, whatToDoWhenNotSupportedMethodFound);
+                                        if (!checkIsAttachedProperty && !checkIsRegularProperty)
                                         {
-                                            MethodName = "get_" + splittedSetterLocalName[1],
-                                            TypeName = splittedSetterLocalName[0],
-                                            CallingMethodFullName = callingMethodFullName,
-                                            CallingMethodFileNameWithPath = fileName,
-                                            CallingMethodLineNumber = ((IXmlLineInfo)nodeAsXElement).LineNumber,
-                                            UserAssemblyName = userAssemblyName,
-                                            MethodAssemblyName = setterPropertyAssemblyName,
-                                            NeedToBeCheckedBecauseOfInheritance = true,
-                                        });
-                                    }
-                                }
-                                else
-                                {
-                                    if (isAttachedProperty.Value)
-                                    {
-                                        analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Get" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
-                                        analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
+                                            whatToDoWhenNotSupportedMethodFound(new UnsupportedMethodInfo()
+                                            {
+                                                MethodName = "get_" + splittedSetterLocalName[1],
+                                                TypeName = splittedSetterLocalName[0],
+                                                CallingMethodFullName = callingMethodFullName,
+                                                CallingMethodFileNameWithPath = fileName,
+                                                CallingMethodLineNumber = ((IXmlLineInfo)nodeAsXElement).LineNumber,
+                                                UserAssemblyName = userAssemblyName,
+                                                MethodAssemblyName = setterPropertyAssemblyName,
+                                                NeedToBeCheckedBecauseOfInheritance = true,
+                                            });
+                                        }
                                     }
                                     else
                                     {
-                                        analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "get_" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
+                                        if (isAttachedProperty.Value)
+                                        {
+                                            analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Get" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
+                                            analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "Set" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
+                                        }
+                                        else
+                                        {
+                                            analyzeHelper.CheckMethodValidity(userAssembliesNamesLowercase, fileName, userAssemblyName, errorsAlreadyRaised, ((IXmlLineInfo)nodeAsXElement).LineNumber, setterPropertyAssemblyName, setterPropertyNamespaceName, "get_" + splittedSetterLocalName[1], splittedSetterLocalName[0], callingMethodFullName, true, whatToDoWhenNotSupportedMethodFound);
+                                        }
                                     }
                                 }
                                 isSpecialName = true;
@@ -547,37 +550,45 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string attributeTypeName;
             string attributeNamespaceName;
             XName propertyDeclaringType = GetTargetTypeValueAsXNameFromSetter(attribute.Parent);
-            if (attributeValue.Contains("."))
+            if (propertyDeclaringType != null)
             {
-                string[] splittedPropertyPath = attributeValue.Split('.');
-                attributePropertyName = splittedPropertyPath[1];
-                if (splittedPropertyPath[0].Contains(":"))
+                if (attributeValue.Contains("."))
                 {
-                    string[] splittedTypeName = splittedPropertyPath[0].Split(':');
-                    attributeTypeName = splittedTypeName[1];
-                    attributeNamespaceName = attribute.Parent.GetNamespaceOfPrefix(splittedTypeName[0]).NamespaceName;
+                    string[] splittedPropertyPath = attributeValue.Split('.');
+                    attributePropertyName = splittedPropertyPath[1];
+                    if (splittedPropertyPath[0].Contains(":"))
+                    {
+                        string[] splittedTypeName = splittedPropertyPath[0].Split(':');
+                        attributeTypeName = splittedTypeName[1];
+                        attributeNamespaceName = attribute.Parent.GetNamespaceOfPrefix(splittedTypeName[0]).NamespaceName;
+                    }
+                    else
+                    {
+                        attributeTypeName = splittedPropertyPath[0];
+                        attributeNamespaceName = attribute.Parent.GetDefaultNamespace().NamespaceName;
+                    }
                 }
                 else
                 {
-                    attributeTypeName = splittedPropertyPath[0];
-                    attributeNamespaceName = attribute.Parent.GetDefaultNamespace().NamespaceName;
+                    attributePropertyName = attributeValue;
+                    attributeTypeName = propertyDeclaringType.LocalName;
+                    attributeNamespaceName = propertyDeclaringType.NamespaceName;
                 }
-            }
-            else
-            {
-                attributePropertyName = attributeValue;
-                attributeTypeName = propertyDeclaringType.LocalName;
-                attributeNamespaceName = propertyDeclaringType.NamespaceName;
-            }
-            if (propertyDeclaringType.NamespaceName != attributeNamespaceName || propertyDeclaringType.LocalName != attributeTypeName)
-            {
-                isAttachedProperty = null;
+                if (propertyDeclaringType != null && (propertyDeclaringType.NamespaceName != attributeNamespaceName || propertyDeclaringType.LocalName != attributeTypeName))
+                {
+                    isAttachedProperty = null;
+                }
+                else
+                {
+                    isAttachedProperty = false;
+                }
+                return "{" + attributeNamespaceName + "}" + attributeTypeName + "." + attributePropertyName;
             }
             else
             {
                 isAttachedProperty = false;
+                return null;
             }
-            return "{" + attributeNamespaceName + "}" + attributeTypeName + "." + attributePropertyName;
         }
 
         private static XName GetTargetTypeValueAsXNameFromSetter(XElement parent)
