@@ -12,7 +12,7 @@ namespace CSHTML5.Tools.CompatibilityAnalyzer.App.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.2.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.4.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -32,6 +32,78 @@ namespace CSHTML5.Tools.CompatibilityAnalyzer.App.Properties {
             }
             set {
                 this["OtherFoldersPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CoreAssemblyPath {
+            get {
+                return ((string)(this["CoreAssemblyPath"]));
+            }
+            set {
+                this["CoreAssemblyPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FeaturesAndEstimationsPath {
+            get {
+                return ((string)(this["FeaturesAndEstimationsPath"]));
+            }
+            set {
+                this["FeaturesAndEstimationsPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MscorlibFolderPath {
+            get {
+                return ((string)(this["MscorlibFolderPath"]));
+            }
+            set {
+                this["MscorlibFolderPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SDKFolderPath {
+            get {
+                return ((string)(this["SDKFolderPath"]));
+            }
+            set {
+                this["SDKFolderPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SupportedElementsPath {
+            get {
+                return ((string)(this["SupportedElementsPath"]));
+            }
+            set {
+                this["SupportedElementsPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string XamlFilesToIgnore {
+            get {
+                return ((string)(this["XamlFilesToIgnore"]));
+            }
+            set {
+                this["XamlFilesToIgnore"] = value;
             }
         }
     }

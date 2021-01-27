@@ -62,13 +62,88 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 #endif
 
             // Initialize the output Excel file path:
+            ResetOutputExcelFilePath();
+
+            // Initialize the SL Migration Core assembly folder path field:
+            if (string.IsNullOrEmpty(Settings.Default.CoreAssemblyPath))
+                ResetCoreAssemblyPath();
+            else
+                CoreAssemblyPathTextBox.Text = Settings.Default.CoreAssemblyPath;
+
+            // Initialize the path to the "Features and Estimations.xlsx" file:
+            if (string.IsNullOrEmpty(Settings.Default.FeaturesAndEstimationsPath))
+                ResetFeaturesAndEstimationsPath();
+            else
+                FeaturesAndEstimationsPathTextBox.Text = Settings.Default.FeaturesAndEstimationsPath;
+
+            // Initialize the path that contains the Silverlight "Mscorlib.dll" file:
+            if (string.IsNullOrEmpty(Settings.Default.MscorlibFolderPath))
+                ResetMscorlibFolderPath();
+            else
+                MscorlibFolderPathTextBox.Text = Settings.Default.MscorlibFolderPath;
+
+            // Initialize the path that contains the Silverlight SDK:
+            if (string.IsNullOrEmpty(Settings.Default.SDKFolderPath))
+                ResetSDKFolderPath();
+            else
+                SDKFolderPathTextBox.Text = Settings.Default.SDKFolderPath;
+
+            // Reload the previous value of the "other paths" field:
+            if (string.IsNullOrEmpty(Settings.Default.OtherFoldersPath))
+                ResetOtherFoldersPath();
+            else
+                OtherFoldersPathTextBox.Text = Settings.Default.OtherFoldersPath;
+
+            // Supported elements path:
+            if (string.IsNullOrEmpty(Settings.Default.SupportedElementsPath))
+                ResetSupportedElementsPath();
+            else
+                SupportedElementsPathTextBox.Text = Settings.Default.SupportedElementsPath;
+
+            // XAML files to ignore:
+            if (string.IsNullOrEmpty(Settings.Default.XamlFilesToIgnore))
+                ResetXamlFilesToIgnore();
+            else
+                XamlFilesToIgnoreTextBox.Text = Settings.Default.XamlFilesToIgnore;
+        }
+
+        private void ButtonResetValues_Click(object sender, RoutedEventArgs e)
+        {
+            ResetOutputExcelFilePath();
+            ResetCoreAssemblyPath();
+            ResetFeaturesAndEstimationsPath();
+            ResetMscorlibFolderPath();
+            ResetMscorlibFolderPath();
+            ResetSDKFolderPath();
+            ResetOtherFoldersPath();
+            ResetSupportedElementsPath();
+            ResetXamlFilesToIgnore();
+
+            SaveContentOfTextBoxes();
+        }
+
+        void SaveContentOfTextBoxes()
+        {
+            Settings.Default.CoreAssemblyPath = CoreAssemblyPathTextBox.Text;
+            Settings.Default.FeaturesAndEstimationsPath = FeaturesAndEstimationsPathTextBox.Text;
+            Settings.Default.MscorlibFolderPath = MscorlibFolderPathTextBox.Text;
+            Settings.Default.SDKFolderPath = SDKFolderPathTextBox.Text;
+            Settings.Default.OtherFoldersPath = OtherFoldersPathTextBox.Text;
+            Settings.Default.SupportedElementsPath = SupportedElementsPathTextBox.Text;
+            Settings.Default.XamlFilesToIgnore = XamlFilesToIgnoreTextBox.Text;
+
+            Settings.Default.Save();
+        }
+
+        void ResetOutputExcelFilePath()
+        {
             string excelFileName = "SL Migration Analysis - "
-                    + DateTime.Now.Year.ToString() + "-"
-                    + DateTime.Now.Month.ToString() + "-"
-                    + DateTime.Now.Day.ToString() + " "
-                    + DateTime.Now.Hour.ToString() + "-"
-                    + DateTime.Now.Minute.ToString()
-                    + ".xlsx";
+                   + DateTime.Now.Year.ToString() + "-"
+                   + DateTime.Now.Month.ToString() + "-"
+                   + DateTime.Now.Day.ToString() + " "
+                   + DateTime.Now.Hour.ToString() + "-"
+                   + DateTime.Now.Minute.ToString()
+                   + ".xlsx";
             string outputExcelFolderPath = Configuration.GeneratedFilesFolderPath;
             if (!string.IsNullOrEmpty(outputExcelFolderPath))
             {
@@ -82,26 +157,35 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 outputExcelFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             }
             OutputExcelFilePathTextBox.Text = System.IO.Path.Combine(outputExcelFolderPath, excelFileName);
+        }
 
-            // Initialize the SL Migration Core assembly folder path field:
-            CoreAssemblyPathTextBox.Text =
-                System.IO.Path.Combine(GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration");
+        void ResetCoreAssemblyPath()
+        {
+            CoreAssemblyPathTextBox.Text = System.IO.Path.Combine(GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration");
+        }
 
-            // Initialize the path to the "Features and Estimations.xlsx" file:
+        void ResetFeaturesAndEstimationsPath()
+        {
             FeaturesAndEstimationsPathTextBox.Text = Configuration.DefaultPathToFeaturesAndEstimationsFile;
+        }
 
-            // Initialize the path that contains the Silverlight "Mscorlib.dll" file:
-            MscorlibFolderPathTextBox.Text =
-                System.IO.Path.Combine(GetProgramFilesX86Path(), @"Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\");
+        void ResetMscorlibFolderPath()
+        {
+            MscorlibFolderPathTextBox.Text = System.IO.Path.Combine(GetProgramFilesX86Path(), @"Reference Assemblies\Microsoft\Framework\Silverlight\v5.0\");
+        }
 
-            // Initialize the path that contains the Silverlight SDK:
-            SDKFolderPathTextBox.Text =
-                System.IO.Path.Combine(GetProgramFilesX86Path(), @"Microsoft SDKs\Silverlight\v5.0\Libraries\Client");
+        void ResetSDKFolderPath()
+        {
+            SDKFolderPathTextBox.Text = System.IO.Path.Combine(GetProgramFilesX86Path(), @"Microsoft SDKs\Silverlight\v5.0\Libraries\Client");
+        }
 
-            // Reload the previous value of the "other paths" field:
-            if (Settings.Default.OtherFoldersPath != null)
-                OtherFoldersPathTextBox.Text = Settings.Default.OtherFoldersPath;
+        void ResetOtherFoldersPath()
+        {
+            OtherFoldersPathTextBox.Text = "";
+        }
 
+        void ResetSupportedElementsPath()
+        {
             try
             {
                 var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -113,7 +197,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 SupportedElementsPathTextBox.Text = "";
             }
+        }
 
+        void ResetXamlFilesToIgnore()
+        {
             XamlFilesToIgnoreTextBox.Text = @"*\System.Windows.xaml, *\TelerikStyleOverride.xaml, *\Telerik.Windows.Controls.xaml, *\Telerik.Windows.Controls.Data.xaml, *\Telerik.Windows.Controls.Input.xaml, *\Telerik.Windows.Controls.Navigation.xaml, *\Telerik.Windows.Controls.DataVisualization.xaml, *\Telerik.Windows.Controls.Chart.xaml, *\Telerik.Windows.Controls.Diagrams.xaml, *\Telerik.Windows.Controls.Diagrams.Extensions.xaml, *\Telerik.Windows.Controls.Docking.xaml, *\Telerik.Windows.Controls.Expressions.xaml, *\Telerik.Windows.Controls.GanttView.xaml, *\Telerik.Windows.Controls.GridView.xaml, *\Telerik.Windows.Controls.ImageEditor.xaml, *\Telerik.Windows.Controls.RibbonView.xaml, *\Telerik.Windows.Controls.RichTextBoxUI.xaml, *\Telerik.Windows.Controls.ScheduleView.xaml, *\Telerik.Windows.Controls.Spreadsheet.xaml, *\Telerik.Windows.Documents.xaml, *\Telerik.Windows.Documents.Proofing.xaml";
         }
 
@@ -152,9 +239,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
             var featuresAndEstimationsFileProcessor = new FeaturesAndEstimationsFileProcessor(FeaturesAndEstimationsPathTextBox.Text);
 
-            // Save the content of the "OtherFoldersPathTextBox" for reuse when relaunching the application:
-            Settings.Default.OtherFoldersPath = OtherFoldersPathTextBox.Text;
-            Settings.Default.Save();
+            // Save the content of the text boxes for reuse when relaunching the application:
+            SaveContentOfTextBoxes();
 
 #if ASK_USER_TO_CHOOSE_ASSEMBLIES_TO_ANALYZE
             // Create OpenFileDialog 
