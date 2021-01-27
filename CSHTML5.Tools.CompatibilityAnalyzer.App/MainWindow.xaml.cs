@@ -410,7 +410,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 //-------------------------------------
 
                 // Save as Excel document:
-                ExcelGenerator.Generate(OutputExcelFilePathTextBox.Text, featuresAndEstimationsFileProcessor, unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed);
+                ExcelGenerator.Generate(
+                    OutputExcelFilePathTextBox.Text,
+                    featuresAndEstimationsFileProcessor,
+                    unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
+                    fileNames.Select(fileName => System.IO.Path.GetFileName(fileName)));
 
 #if SAVE_CSV_DOCUMENT
                 // Save as CSV document:

@@ -14,7 +14,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         public static void Generate(
             string outputExcelFilePath,
             FeaturesAndEstimationsFileProcessor featuresAndEstimationsFileProcessor,
-            SortedDictionary<Tuple<string, string>, HashSet<string>> unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed)
+            SortedDictionary<Tuple<string, string>, HashSet<string>> unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
+            IEnumerable<string> analyzedDlls)
         {
             ExcelEngine excelEngine = new ExcelEngine();
 
@@ -183,6 +184,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             {
                 Debug.WriteLine(ex.ToString());
             }
+
+            // Add information at the end about the DLLs that have been analized:
+            currentRow += 5;
+            string analyzedDllsText = "(Analyzed DLLs: " + string.Join(", ", analyzedDlls) + ")";
+            worksheet.Range["A" + currentRow.ToString()].Text = analyzedDllsText;
 
             // Saving the workbook to disk in XLSX format
             workbook.SaveAs(outputExcelFilePath);
