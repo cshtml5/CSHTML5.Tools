@@ -1,4 +1,5 @@
-﻿using StubGenerator.Common.Options;
+﻿using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
+using StubGenerator.Common.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,6 +54,11 @@ namespace StubGenerator.Common
                 }
             }
         }
+
+        internal static string SLMigrationCoreAssemblyFolderPath = Path.Combine(
+            AnalysisUtils.GetProgramFilesX86Path(),
+            @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration");
+
         // Path of supportedElements file
         internal static string supportedElementsPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\BridgeSupportedElements.xml");
 

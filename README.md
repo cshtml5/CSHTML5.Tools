@@ -33,6 +33,8 @@ To create stubs from your Silverlight 3rd-party referenced libraries, please fol
 
 ![Folder screenshot](/screenshots/config_folder3.png "Folder screenshot")
 
+(Optional) If you want to use a specific OpenSilver.dll instead of CSHTML5, compile the OpenSilver configuration and set Field #9 to the compilation output dir e.g. OpenSilver\src\Runtime\Runtime\bin\OpenSilver\SL.WorkInProgress\netstandard2.0
+
 You can leave the other fields empty or with their default value for now.
 
 5. Click "Start" to generate the stubs. A message will appear indicating that the operation may take a few minutes.

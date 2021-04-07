@@ -21,9 +21,9 @@ namespace StubGenerator.Common.Analyzer
 
         public AssemblyDefinition Assembly { get; set; }
 
-        internal AssemblyAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions)
+        internal AssemblyAnalyzer(string coreASsemblyFolder, Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions)
         {
-            Init(unsupportedMethods, modules, outputOptions);
+            Init(coreASsemblyFolder, unsupportedMethods, modules, outputOptions);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace StubGenerator.Common.Analyzer
         /// <param name="unsupportedMethods"></param>
         /// <param name="modules"></param>
         /// <param name="outputOptions"></param>
-        private void Init(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
+        private void Init(string coreASsemblyFolder, Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
         {
             if (!_isInitialized)
             {
@@ -47,7 +47,7 @@ namespace StubGenerator.Common.Analyzer
 
                 _unsupportedMethods = unsupportedMethods;
                 _modules = modules;
-                ClassAnalyzer = new ClassAnalyzer(_unsupportedMethods, _modules, _outputOptions);
+                ClassAnalyzer = new ClassAnalyzer(coreASsemblyFolder, _unsupportedMethods, _modules, _outputOptions);
 
                 _isInitialized = true;
             }

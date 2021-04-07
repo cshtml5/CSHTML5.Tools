@@ -1,4 +1,5 @@
-﻿using StubGenerator.Common.Options;
+﻿using DotNetForHtml5.PrivateTools.AssemblyAnalysisCommon;
+using StubGenerator.Common.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,7 @@ namespace DotNetForHtml5.PrivateTools
         public MainWindow()
         {
             InitializeComponent();
+            SLMigrationCoreAssemblyFolderPath.Text = StubGenerator.Common.Configuration.SLMigrationCoreAssemblyFolderPath;
         }
 
         private void ButtonGeneratedFilesFolderClick(object sender, RoutedEventArgs e)
@@ -238,6 +240,7 @@ namespace DotNetForHtml5.PrivateTools
             StubGenerator.Common.Configuration.ReferencedAssembliesFolderPath = ReferencedAssembliesFolderPath.Text;
             StubGenerator.Common.Configuration.PathOfDirectoryWhereFileAreGenerated = GeneratedFilesFolderPath.Text;
             StubGenerator.Common.Configuration.IsUsingVersion2 = CSHTML5Version.SelectedIndex == 0;
+            StubGenerator.Common.Configuration.SLMigrationCoreAssemblyFolderPath = SLMigrationCoreAssemblyFolderPath.Text;
             StubGenerator.Common.StubGenerator stubGenerator = new StubGenerator.Common.StubGenerator();
             stubGenerator.Run();
             PleaseWaitContainer.Visibility = Visibility.Collapsed;
@@ -263,6 +266,13 @@ namespace DotNetForHtml5.PrivateTools
             this.Close();
         }
 
-
+        private void SLMigrationCoreAssemblyButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                SLMigrationCoreAssemblyFolderPath.Text = openFileDialog.FileName;
+            }
+        }
     }
 }

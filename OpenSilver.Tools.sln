@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29215.179
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.StubGenerator.App", "CSHTML5.Tools.StubGenerator.App\CSHTML5.Tools.StubGenerator.App.csproj", "{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.StubGenerator", "CSHTML5.Tools.StubGenerator\CSHTML5.Tools.StubGenerator.csproj", "{B484D8CC-27F8-4A70-9968-9DF1EC04600B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.AssemblyAnalysisCommon", "CSHTML5.Tools.AssemblyAnalysisCommon\CSHTML5.Tools.AssemblyAnalysisCommon.csproj", "{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSHTML5.Tools.CompatibilityAnalyzer.App", "CSHTML5.Tools.CompatibilityAnalyzer.App\CSHTML5.Tools.CompatibilityAnalyzer.App.csproj", "{99771B41-0FCF-46A7-AC96-ED557EC05DD6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		CSHTML5|Any CPU = CSHTML5|Any CPU
+		OpenSilver|Any CPU = OpenSilver|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.CSHTML5|Any CPU.ActiveCfg = CSHTML5|Any CPU
+		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.CSHTML5|Any CPU.Build.0 = CSHTML5|Any CPU
+		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.OpenSilver|Any CPU.ActiveCfg = OpenSilver|Any CPU
+		{9850A30B-17B9-4FD3-9799-0C2F7DCFBF24}.OpenSilver|Any CPU.Build.0 = OpenSilver|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.CSHTML5|Any CPU.ActiveCfg = CSHTML5|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.CSHTML5|Any CPU.Build.0 = CSHTML5|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.OpenSilver|Any CPU.ActiveCfg = OpenSilver|Any CPU
+		{B484D8CC-27F8-4A70-9968-9DF1EC04600B}.OpenSilver|Any CPU.Build.0 = OpenSilver|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.CSHTML5|Any CPU.ActiveCfg = CSHTML5|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.CSHTML5|Any CPU.Build.0 = CSHTML5|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.OpenSilver|Any CPU.ActiveCfg = OpenSilver|Any CPU
+		{8BD10359-5315-4F6A-B82C-B0B0862ED4A2}.OpenSilver|Any CPU.Build.0 = OpenSilver|Any CPU
+		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.CSHTML5|Any CPU.ActiveCfg = OpenSilver|Any CPU
+		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.CSHTML5|Any CPU.Build.0 = OpenSilver|Any CPU
+		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.OpenSilver|Any CPU.ActiveCfg = OpenSilver|Any CPU
+		{99771B41-0FCF-46A7-AC96-ED557EC05DD6}.OpenSilver|Any CPU.Build.0 = OpenSilver|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {568E60D1-145E-48F5-AC41-2FBC6970BCC1}
+	EndGlobalSection
+EndGlobal
