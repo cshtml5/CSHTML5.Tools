@@ -48,9 +48,9 @@ namespace StubGenerator.Common.Analyzer
 
         private MethodAnalyzer MethodAnalyzer { get; set; }
 
-        internal ClassAnalyzer(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
+        internal ClassAnalyzer(string coreASsemblyFolder, Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
         {
-            Init(unsupportedMethods, modules, outputOptions);
+            Init(coreASsemblyFolder, unsupportedMethods, modules, outputOptions);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace StubGenerator.Common.Analyzer
         /// <param name="unsupportedMethods"></param>
         /// <param name="modules"></param>
         /// <param name="outputOptions"></param>
-        private void Init(Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
+        private void Init(string coreASsemblyFolder, Dictionary<string, Dictionary<string, HashSet<string>>> unsupportedMethods, List<ModuleDefinition> modules, OutputOptions outputOptions = null)
         {
             if (!_isInitialized)
             {
@@ -73,7 +73,7 @@ namespace StubGenerator.Common.Analyzer
                 }
                 if (!analyzeHelpher._initialized)
                 {
-                    CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(System.IO.Path.Combine(AnalysisUtils.GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration"));
+                    CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(coreASsemblyFolder);
                     analyzeHelpher.Initialize(coreSupportedMethods, Configuration.supportedElementsPath);
                 }
 

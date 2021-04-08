@@ -235,40 +235,54 @@ namespace StubGenerator.Common.Analyzer
         /// <returns></returns>
         public bool CanWorkOnElement()
         {
-            if (Element == null)
+            try
             {
-                return false;
-            }
-            bool isExplicitlyImplemented;
-            string methodName;
-            if (AnalysisUtils.IsMethodExplicitlyImplemented(Element))
-            {
-                int lastDotIndex = Element.Name.LastIndexOf('.');
-                methodName = Element.Name.Substring(lastDotIndex + 1);
-                string interfaceFullName = Element.Name.Substring(0, lastDotIndex);
-                TypeReference interfaceWhereMethodIsDefined = GetInterfaceImplementedByParentFromFullName(AnalysisUtils.GetGenericTypeNameFromTypeName(interfaceFullName));
-                if (interfaceWhereMethodIsDefined == null)
+                if (Element == null)
                 {
-                    isExplicitlyImplemented = false;
+                    return false;
                 }
-                else
+                bool isExplicitlyImplemented;
+                string methodName;
+                if (AnalysisUtils.IsMethodExplicitlyImplemented(Element))
                 {
-                    string interfaceAssemblyName = interfaceWhereMethodIsDefined.Scope.Name.Replace(".dll", "");
-                    HashSet<string> interfaceMethods;
-                    if (ClassAnalyzer.analyzeHelpher._coreSupportedMethods.ContainsType(interfaceWhereMethodIsDefined.Name, interfaceWhereMethodIsDefined.Namespace))
+                    int lastDotIndex = Element.Name.LastIndexOf('.');
+                    methodName = Element.Name.Substring(lastDotIndex + 1);
+                    string interfaceFullName = Element.Name.Substring(0, lastDotIndex);
+                    TypeReference interfaceWhereMethodIsDefined = GetInterfaceImplementedByParentFromFullName(AnalysisUtils.GetGenericTypeNameFromTypeName(interfaceFullName));
+                    if (interfaceWhereMethodIsDefined == null)
                     {
-                        isExplicitlyImplemented = true;
+                        isExplicitlyImplemented = false;
                     }
-                    else if (ClassAnalyzer.analyzeHelpher.IsTypeSupported(interfaceWhereMethodIsDefined))
+                    else
                     {
-                        //TODO : check if method is supported
-                        isExplicitlyImplemented = true;
-                    }
-                    else if (_unsupportedMethods.ContainsKey(interfaceAssemblyName))
-                    {
-                        if (_unsupportedMethods[interfaceAssemblyName].TryGetValue(interfaceWhereMethodIsDefined.Name, out interfaceMethods))
+                        string interfaceAssemblyName = interfaceWhereMethodIsDefined.Scope.Name.Replace(".dll", "");
+                        HashSet<string> interfaceMethods;
+                        if (ClassAnalyzer.analyzeHelpher._coreSupportedMethods.ContainsType(interfaceWhereMethodIsDefined.Name, interfaceWhereMethodIsDefined.Namespace))
                         {
-                            isExplicitlyImplemented = interfaceMethods.Contains(methodName);
+                            isExplicitlyImplemented = true;
+                        }
+                        else if (ClassAnalyzer.analyzeHelpher.IsTypeSupported(interfaceWhereMethodIsDefined))
+                        {
+                            //TODO : check if method is supported
+                            isExplicitlyImplemented = true;
+                        }
+                        else if (_unsupportedMethods.ContainsKey(interfaceAssemblyName))
+                        {
+                            if (_unsupportedMethods[interfaceAssemblyName].TryGetValue(interfaceWhereMethodIsDefined.Name, out interfaceMethods))
+                            {
+                                isExplicitlyImplemented = interfaceMethods.Contains(methodName);
+                            }
+                            else
+                            {
+                                if (_parentClassAnalyzer._additionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
+                                {
+                                    isExplicitlyImplemented = interfaceMethods.Contains(methodName);
+                                }
+                                else
+                                {
+                                    isExplicitlyImplemented = false;
+                                }
+                            }
                         }
                         else
                         {
@@ -282,29 +296,25 @@ namespace StubGenerator.Common.Analyzer
                             }
                         }
                     }
-                    else
-                    {
-                        if (_parentClassAnalyzer._additionalTypesToImplement.TryGetValue(interfaceWhereMethodIsDefined, out interfaceMethods))
-                        {
-                            isExplicitlyImplemented = interfaceMethods.Contains(methodName);
-                        }
-                        else
-                        {
-                            isExplicitlyImplemented = false;
-                        }
-                    }
                 }
+                else
+                {
+                    methodName = Element.Name;
+                    isExplicitlyImplemented = false;
+                }
+                bool isNotAlreadyImplemented = !IsMethodAlreadyImplemented(Element);
+                bool isUnsupported = _unsupportedMethodsInCurrentType.Contains(methodName);
+                bool isAccessible = (_outputOptions.OutputOnlyPublicAndProtectedMembers && (Element.IsPublic || Element.IsFamily))
+                    || !_outputOptions.OutputOnlyPublicAndProtectedMembers;
+                return isNotAlreadyImplemented && isUnsupported && (isAccessible || isExplicitlyImplemented);
             }
-            else
+            catch (Exception e)
             {
-                methodName = Element.Name;
-                isExplicitlyImplemented = false;
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(Configuration.PathOfDirectoryWhereFileAreGenerated, "error.txt"),
+                    String.Format("Cannot generate {0}.{1}{2}", Element.DeclaringType.FullName, Element.Name, Environment.NewLine));
+                return false;
             }
-            bool isNotAlreadyImplemented = !IsMethodAlreadyImplemented(Element);
-            bool isUnsupported = _unsupportedMethodsInCurrentType.Contains(methodName);
-            bool isAccessible = (_outputOptions.OutputOnlyPublicAndProtectedMembers && (Element.IsPublic || Element.IsFamily))
-                || !_outputOptions.OutputOnlyPublicAndProtectedMembers;
-            return isNotAlreadyImplemented && isUnsupported && (isAccessible || isExplicitlyImplemented);
         }
 
         /// <summary>

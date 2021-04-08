@@ -18,12 +18,16 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             _coreAssemblyFolder = coreAssemblyFolder;
             _coreAssembliesPaths = new string[]
             {
+#if CSHTML5
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.dll.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.Runtime.Serialization.dll.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.ServiceModel.dll.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.Xaml.dll.dll"),
                 Path.Combine(_coreAssemblyFolder, @"SLMigration.CSharpXamlForHtml5.System.Xml.dll.dll"),
+#else
+                Path.Combine(_coreAssemblyFolder, @"OpenSilver.dll"),
+#endif
             };
             Initialize();
         }

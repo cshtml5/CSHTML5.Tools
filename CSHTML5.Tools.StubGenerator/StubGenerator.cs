@@ -38,7 +38,7 @@ namespace StubGenerator.Common
         {
             ILogger logger = new LoggerThatAggregatesAllErrors();
             List<UnsupportedMethodInfo> unsupportedMethodInfos = new List<UnsupportedMethodInfo>();
-            CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(System.IO.Path.Combine(AnalysisUtils.GetProgramFilesX86Path(), @"MSBuild\CSharpXamlForHtml5\InternalStuff\Compiler\SLMigration"));
+            CoreSupportedMethodsContainer coreSupportedMethods = new CoreSupportedMethodsContainer(Configuration.SLMigrationCoreAssemblyFolderPath);
 
             foreach (string filename in _inputAssemblies)
             {
@@ -217,7 +217,11 @@ namespace StubGenerator.Common
             AnalysisUtils.SetModules(_modules);
             GetUnsupportedMethods();
             AddUndetectedMethodToUnsupportedMethods(Configuration.MethodsToAddManuallyBecauseTheyAreUndetected);
-            _assemblyAnalyzer = new AssemblyAnalyzer(_unsupportedMethodsInfo, _modules, _outputOptions);
+            _assemblyAnalyzer = new AssemblyAnalyzer(
+                Configuration.SLMigrationCoreAssemblyFolderPath, 
+                _unsupportedMethodsInfo,
+                _modules, 
+                _outputOptions);
         }
 
         /// <summary>
