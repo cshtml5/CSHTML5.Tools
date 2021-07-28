@@ -1,3 +1,8 @@
+# CSHTML5.Tools.CompatibilityAnalyzer
+
+Instructions this tool are coming soon
+
+
 # CSHTML5.Tools.StubGenerator
 
 This tool lets you create stubs for the 3rd-party referenced libraries used in your Silverlight projects.
