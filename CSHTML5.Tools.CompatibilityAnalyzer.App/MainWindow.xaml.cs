@@ -22,6 +22,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using CSHTML5.Tools.CompatibilityAnalyzer.App.Properties;
+using Microsoft.Win32;
+using Path = System.IO.Path;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -492,35 +494,52 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 }
 
                 //-------------------------------------
+                // Measure elapsed time:
+                //-------------------------------------
+
+                var elapsedMs = watch.ElapsedMilliseconds;
+
+                //-------------------------------------
+                // Request where to save:
+                //-------------------------------------
+
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "Excel file (*.xlsx)|*.xlsx";
+                saveFileDialog.FileName = Path.GetFileName(OutputExcelFilePathTextBox.Text);
+                saveFileDialog.InitialDirectory = Path.GetDirectoryName(OutputExcelFilePathTextBox.Text);
+                if (saveFileDialog.ShowDialog() == false)
+                    return;
+                string outputFileFullNameAndPath = saveFileDialog.FileName;
+
+                //-------------------------------------
                 // Save the result:
                 //-------------------------------------
 
                 // Save as Excel document:
                 ExcelGenerator.Generate(
-                    OutputExcelFilePathTextBox.Text,
-                    featuresAndEstimationsFileProcessor,
-                    unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
-                    fileNames.Select(fileName => System.IO.Path.GetFileName(fileName)));
+                outputFileFullNameAndPath,
+                featuresAndEstimationsFileProcessor,
+                unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
+                fileNames.Select(fileName => System.IO.Path.GetFileName(fileName)));
 
 #if SAVE_CSV_DOCUMENT
-                // Save as CSV document:
-                CsvGenerator.Generate(OutputCsvFilePathTextBox.Text, unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed);
+            // Save as CSV document:
+            CsvGenerator.Generate(OutputCsvFilePathTextBox.Text, unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed);
 #endif
 
-                var elapsedMs = watch.ElapsedMilliseconds;
-                MessageBox.Show(string.Format("Operation completed in {0} seconds.", Math.Floor(elapsedMs / 1000d).ToString()));
+            MessageBox.Show(string.Format("Operation completed in {0} seconds.", Math.Floor(elapsedMs / 1000d).ToString()));
 
-                //-------------------------------------
-                // Open the result:
-                //-------------------------------------
+            //-------------------------------------
+            // Open the result:
+            //-------------------------------------
 
-                Process.Start(OutputExcelFilePathTextBox.Text);
+            Process.Start(outputFileFullNameAndPath);
 
-                //-------------------------------------
-                // Close this app:
-                //-------------------------------------
+            //-------------------------------------
+            // Close this app:
+            //-------------------------------------
 
-                System.Windows.Application.Current.Shutdown();
+            System.Windows.Application.Current.Shutdown();
             }
         }
 
