@@ -9,6 +9,10 @@ using System.Reflection;
 using System.Resources;
 using System.Xml;
 using System.Xml.Linq;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer.AssemblyReaderParameters;
+using Microsoft.Build.Utilities;
+
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
     public static class CompatibilityAnalyzer
@@ -25,15 +29,12 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses,
             HashSet<string> listOfFilesToIgnore,
             string supportedElementsPath,
-            string mscorlibFolderPath,
-            string sdkFolderPath,
-            string otherFoldersPath,
             bool skipTypesWhereNoMethodIsActuallyCalled,
-            bool addBothPropertyAndEventWhenNotFound = false,
-            string additionalFolderWhereToResolveAssemblies = null)
+            IReaderParametersFactory readerParametersFactory,
+            bool addBothPropertyAndEventWhenNotFound = false)
         {
             _coreSupportedMethods = coreSupportedMethods;
-            AssemblyDefinition assembly = LoadAssembly(path, mscorlibFolderPath, sdkFolderPath, otherFoldersPath, additionalFolderWhereToResolveAssemblies);
+            AssemblyDefinition assembly = LoadAssembly(path, readerParametersFactory);
             AssemblyDefinition[] assemblies = new AssemblyDefinition[] { assembly };
 
             HashSet<string> userAssembliesNamesLowercase = new HashSet<string>();
@@ -798,51 +799,14 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             return unsupportedTypes;
         }
         #endregion
-        public static AssemblyDefinition LoadAssembly(string path, string mscorlibFolderPath = null, string sdkFolderPath = null, string otherFoldersPath = null, string additionalFolderWhereToResolveAssemblies = null)
+        public static AssemblyDefinition LoadAssembly(string path, IReaderParametersFactory readerParametersFactory)
         {
             if (String.IsNullOrWhiteSpace(path))
                 throw new InvalidDataException("Assembly path was empty.");
 
-            var resolver = new DefaultAssemblyResolver();
-
-            // Tell the resolver to look for referenced assemblies in the same folder where the loaded assembly is located:
-            string containingFolderPath = Path.GetDirectoryName(path);
-            resolver.AddSearchDirectory(containingFolderPath);
-
-            // Tell the resolver to look for referenced Mscorlib and other framework assemblies in the "mscorlibFolderPath" directory:
-            if (!string.IsNullOrEmpty(mscorlibFolderPath))
-                resolver.AddSearchDirectory(mscorlibFolderPath);
-
-            // Tell the resolver to look for other framework assemblies in the "sdkFolderPath" directory:
-            if (!string.IsNullOrEmpty(sdkFolderPath))
-                resolver.AddSearchDirectory(sdkFolderPath);
-
-            // Tell the resolver to look for other assemblies in the "otherFoldersPath" directory:
-            if (!string.IsNullOrWhiteSpace(otherFoldersPath))
-            {
-                foreach (string p in otherFoldersPath.Split(','))
-                {
-                    if (!string.IsNullOrWhiteSpace(p))
-                    {
-                        resolver.AddSearchDirectory(p);
-                    }
-                }
-            }
-
-            // Tell the resolver to look for referenced assemblies in the specified additional location:
-            if (!string.IsNullOrEmpty(additionalFolderWhereToResolveAssemblies))
-                resolver.AddSearchDirectory(additionalFolderWhereToResolveAssemblies);
-
-            var readerParameters = new ReaderParameters
-            {
-                ReadingMode = ReadingMode.Immediate,
-                ReadSymbols = false,
-                AssemblyResolver = resolver
-            };
-
             try
             {
-                AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(path, readerParameters);
+                AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(path, readerParametersFactory.GetReaderParameters(path));
 
                 if (assembly == null)
                     throw new FileNotFoundException("Could not load the assembly '" + path + "'");

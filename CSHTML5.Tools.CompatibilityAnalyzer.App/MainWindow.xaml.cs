@@ -21,6 +21,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer.AssemblyReaderParameters;
 using CSHTML5.Tools.CompatibilityAnalyzer.App.Properties;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
@@ -284,6 +286,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 // Do the analysis:
                 try
                 {
+                    IReaderParametersFactory readerParametersFactory = new SilverlightReaderParametersFactory(mscorlibFolderPath,
+                        sdkFolderPath, otherFoldersPath, additionalFolderWhereToResolveAssemblies);
+
+                    readerParametersFactory = new WpfReaderParametersFactory();
+
                     foreach (var filename in fileNames)
                     {
                         CompatibilityAnalyzer.Analyze(
@@ -296,11 +303,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             Configuration.AttributesToIgnoreInXamlBecauseTheyAreFromBaseClasses,
                             xamlFilesToIgnore,
                             supportedElementsPath,
-                            mscorlibFolderPath,
-                            sdkFolderPath,
-                            otherFoldersPath,
-                            skipTypesWhereNoMethodIsActuallyCalled: true,
-                            additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies); ;
+                            true,
+                            readerParametersFactory
+                            );
                     }
                 }
                 catch (Exception ex)

@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer.AssemblyReaderParameters;
 
 namespace StubGenerator.Common
 {
@@ -52,12 +54,9 @@ namespace StubGenerator.Common
                     new HashSet<string>(),
                     Configuration.ExcludedFiles,
                     Configuration.supportedElementsPath,
-                    Configuration.mscorlibFolderPath,
-                    Configuration.sdkFolderPath,
-                    "",
-                    skipTypesWhereNoMethodIsActuallyCalled: false,
-                    addBothPropertyAndEventWhenNotFound: true,
-                    additionalFolderWhereToResolveAssemblies: Configuration.ReferencedAssembliesFolderPath);
+                    false,
+                    new SilverlightReaderParametersFactory(Configuration.mscorlibFolderPath, Configuration.sdkFolderPath, "", Configuration.ReferencedAssembliesFolderPath),
+                    addBothPropertyAndEventWhenNotFound: true);
             }
             if (_unsupportedMethodsInfo == null)
             {
@@ -236,7 +235,7 @@ namespace StubGenerator.Common
                 _unsupportedMethodsInfo.TryGetValue(assembly, out unsupportedMethods);
                 if (unsupportedMethods != null)
                 {
-                    AssemblyDefinition assemblyToLookInto = CompatibilityAnalyzer.LoadAssembly(Path.Combine(_referencedAssembliesFolderPath, assembly + ".dll"), Configuration.mscorlibFolderPath);
+                    AssemblyDefinition assemblyToLookInto = CompatibilityAnalyzer.LoadAssembly(Path.Combine(_referencedAssembliesFolderPath, assembly + ".dll"), new SilverlightReaderParametersFactory(Configuration.mscorlibFolderPath));
                     _assemblyAnalyzer.Set(assemblyToLookInto, unsupportedMethods);
                     _assemblyAnalyzer.Run();
                 }

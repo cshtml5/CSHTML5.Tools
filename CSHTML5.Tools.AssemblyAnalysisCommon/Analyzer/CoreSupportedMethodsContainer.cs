@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer;
+using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer.AssemblyReaderParameters;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -129,7 +131,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         {
             foreach (string assembly in _coreAssembliesPaths)
             {
-                AssemblyDefinition coreAssembly = CompatibilityAnalyzer.LoadAssembly(assembly);
+                IReaderParametersFactory readerParametersFactory = new SilverlightReaderParametersFactory();
+
+                readerParametersFactory = new WpfReaderParametersFactory();
+
+                AssemblyDefinition coreAssembly = CompatibilityAnalyzer.LoadAssembly(assembly, readerParametersFactory);
                 FillMapOfXmlNsToCsNs(coreAssembly);
                 //now we go through all the types of this assembly and remember all their public methods:
                 foreach (TypeDefinition type in AnalyzeHelper.GetAllTypesDefinedInAssembly(coreAssembly))

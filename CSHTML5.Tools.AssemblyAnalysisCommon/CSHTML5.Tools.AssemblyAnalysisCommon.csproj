@@ -15,7 +15,8 @@
     <Reference Include="Microsoft.Build.Framework" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Framework" Version="16.9.0" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.2.0" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.2.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
