@@ -15,11 +15,11 @@
         <TextBlock Text="Path to the 'SupportedElements.xml' file:" Margin="0,10,0,0"/>
         <TextBox x:Name="SupportedElementsPathTextBox" Text="-- initialized in constructor --"/>
 
-        <TextBlock Text="Path to the folder that contains the Silverlight 'Mscorlib.dll' file:" Margin="0,10,0,0"/>
-        <TextBox x:Name="MscorlibFolderPathTextBox" Text="-- initialized in constructor --"/>
+        <TextBlock Text="Path to the folder that contains the Silverlight 'Mscorlib.dll' file:" Visibility="Collapsed" Margin="0,10,0,0"/>
+        <TextBox x:Name="MscorlibFolderPathTextBox" Visibility="Collapsed" Text="-- initialized in constructor --"/>
 
-        <TextBlock Text="Path to the folder that contains the Silverlight SDK:" Margin="0,10,0,0"/>
-        <TextBox x:Name="SDKFolderPathTextBox" Text="-- initialized in constructor --"/>
+        <TextBlock Text="Path to the folder that contains the Silverlight SDK:" Visibility="Collapsed" Margin="0,10,0,0"/>
+        <TextBox x:Name="SDKFolderPathTextBox" Visibility="Collapsed" Text="-- initialized in constructor --"/>
 
         <TextBlock Text="(Optional) Other folders that may contain referenced assemblies (comma separated):" Margin="0,10,0,0"/>
         <TextBox x:Name="OtherFoldersPathTextBox" Text=""/>
