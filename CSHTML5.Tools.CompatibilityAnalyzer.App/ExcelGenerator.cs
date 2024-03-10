@@ -15,7 +15,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string outputExcelFilePath,
             FeaturesAndEstimationsFileProcessor featuresAndEstimationsFileProcessor,
             SortedDictionary<Tuple<string, string>, HashSet<string>> unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
-            IEnumerable<string> analyzedDlls)
+            IEnumerable<string> analyzedDlls,
+            int totalXamlFilesCount)
         {
             ExcelEngine excelEngine = new ExcelEngine();
 
@@ -189,6 +190,12 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             currentRow += 5;
             string analyzedDllsText = "(Analyzed DLLs: " + string.Join(", ", analyzedDlls) + ")";
             worksheet.Range["A" + currentRow.ToString()].Text = analyzedDllsText;
+
+            // Add information at the end about the # of XAML files encountered:
+            currentRow += 2;
+            string xamlFilesCountText = "(Total # of XAML files encountered: " + totalXamlFilesCount.ToString() + ")";
+            worksheet.Range["A" + currentRow.ToString()].Text = xamlFilesCountText;
+            
 
             // Saving the workbook to disk in XLSX format
             workbook.SaveAs(outputExcelFilePath);

@@ -284,10 +284,12 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 }
 
                 // Do the analysis:
+                int totalXamlFilesCount = 0;
                 try
                 {
                     foreach (var filename in fileNames)
                     {
+                        int xamlFilesCount;
                         CompatibilityAnalyzer.Analyze(
                             filename,
                             logger,
@@ -302,7 +304,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                             sdkFolderPath,
                             otherFoldersPath,
                             skipTypesWhereNoMethodIsActuallyCalled: true,
-                            additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies); ;
+                            additionalFolderWhereToResolveAssemblies: additionalFolderWhereToResolveAssemblies,
+                            xamlFilesCount: out xamlFilesCount);
+                        totalXamlFilesCount += xamlFilesCount;
                     }
                 }
                 catch (Exception ex)
@@ -517,10 +521,11 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
                 // Save as Excel document:
                 ExcelGenerator.Generate(
-                outputFileFullNameAndPath,
-                featuresAndEstimationsFileProcessor,
-                unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
-                fileNames.Select(fileName => System.IO.Path.GetFileName(fileName)));
+                    outputFileFullNameAndPath,
+                    featuresAndEstimationsFileProcessor,
+                    unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
+                    fileNames.Select(fileName => System.IO.Path.GetFileName(fileName)),
+                    totalXamlFilesCount: totalXamlFilesCount);
 
 #if SAVE_CSV_DOCUMENT
             // Save as CSV document:

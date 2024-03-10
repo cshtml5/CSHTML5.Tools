@@ -42,6 +42,7 @@ namespace StubGenerator.Common
 
             foreach (string filename in _inputAssemblies)
             {
+                int xamlFilesCount;
                 CompatibilityAnalyzer.Analyze(
                     filename,
                     logger,
@@ -57,7 +58,8 @@ namespace StubGenerator.Common
                     "",
                     skipTypesWhereNoMethodIsActuallyCalled: false,
                     addBothPropertyAndEventWhenNotFound: true,
-                    additionalFolderWhereToResolveAssemblies: Configuration.ReferencedAssembliesFolderPath);
+                    additionalFolderWhereToResolveAssemblies: Configuration.ReferencedAssembliesFolderPath,
+                    xamlFilesCount: out xamlFilesCount);
             }
             if (_unsupportedMethodsInfo == null)
             {

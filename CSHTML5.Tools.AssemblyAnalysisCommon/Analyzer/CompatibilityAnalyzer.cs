@@ -29,6 +29,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string sdkFolderPath,
             string otherFoldersPath,
             bool skipTypesWhereNoMethodIsActuallyCalled,
+            out int xamlFilesCount,
             bool addBothPropertyAndEventWhenNotFound = false,
             string additionalFolderWhereToResolveAssemblies = null)
         {
@@ -59,7 +60,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 whatToDoWhenNotSupportedMethodFound: (unsupportedMethodInfo) =>
                 {
                     outputListOfUnsupportedMethods.Add(unsupportedMethodInfo);
-                });
+                }, out xamlFilesCount);
 
             //look in C# files:
             Check(assemblies, userAssembliesNamesLowercase, analyzeHelper, listOfFilesToIgnore, "", coreSupportedMethods,
@@ -72,10 +73,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
 
         #region checking Xaml
-        public static void CheckXamlFiles(string[] inputAssemblies, HashSet<string> userAssembliesNamesLowercase, CoreSupportedMethodsContainer coreSupportedMethods, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
+        public static void CheckXamlFiles(string[] inputAssemblies, HashSet<string> userAssembliesNamesLowercase, CoreSupportedMethodsContainer coreSupportedMethods, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound, out int xamlFilesCount)
         {
             HashSet<string> errorsAlreadyRaised = new HashSet<string>(); // This prevents raising multiple times the same error.
-
+            xamlFilesCount = 0;
             AnalyzeHelper analyzeHelper = new AnalyzeHelper();
             analyzeHelper.Initialize(coreSupportedMethods, supportedElementsPath);
 
@@ -96,7 +97,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                         {
                             if (fileInfo.Extension.Equals(".xaml"))
                             {
+                                xamlFilesCount++;
                                 string fileName = resource.Key.ToString();
+                                System.Diagnostics.Debug.WriteLine(fileName);
                                 StreamReader sr = new StreamReader((Stream)resource.Value);
                                 XDocument doc = XDocument.Parse(sr.ReadToEnd(), LoadOptions.SetLineInfo);
                                 //go through all the tags, check if the types and properties are supported:
