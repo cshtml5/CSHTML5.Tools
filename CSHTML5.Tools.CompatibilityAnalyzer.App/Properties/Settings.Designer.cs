@@ -12,7 +12,7 @@ namespace CSHTML5.Tools.CompatibilityAnalyzer.App.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.10.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -104,6 +104,42 @@ namespace CSHTML5.Tools.CompatibilityAnalyzer.App.Properties {
             }
             set {
                 this["XamlFilesToIgnore"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PresetFiles {
+            get {
+                return ((string)(this["PresetFiles"]));
+            }
+            set {
+                this["PresetFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PersistPresetFiles {
+            get {
+                return ((bool)(this["PersistPresetFiles"]));
+            }
+            set {
+                this["PersistPresetFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GeneratedFilesFolderPath {
+            get {
+                return ((string)(this["GeneratedFilesFolderPath"]));
+            }
+            set {
+                this["GeneratedFilesFolderPath"] = value;
             }
         }
     }

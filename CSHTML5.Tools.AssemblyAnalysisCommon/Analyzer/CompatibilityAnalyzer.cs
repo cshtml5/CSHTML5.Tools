@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using CSHTML5.Tools.AssemblyAnalysisCommon.Analyzer;
@@ -24,13 +25,14 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             ILogger logger,
             List<UnsupportedMethodInfo> outputListOfUnsupportedMethods,
             CoreSupportedMethodsContainer coreSupportedMethods,
-            string[] inputAssemblies,
+            IReadOnlyList<string> inputAssembliesArray,
             HashSet<string> urlNamespacesThatBelongToUserCode,
             HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses,
             HashSet<string> listOfFilesToIgnore,
             string supportedElementsPath,
             bool skipTypesWhereNoMethodIsActuallyCalled,
             IReaderParametersFactory readerParametersFactory,
+            Dictionary<string, string> couldNotOpenErrors,
             bool addBothPropertyAndEventWhenNotFound = false)
         {
             _coreSupportedMethods = coreSupportedMethods;
@@ -38,6 +40,10 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             AssemblyDefinition[] assemblies = new AssemblyDefinition[] { assembly };
 
             HashSet<string> userAssembliesNamesLowercase = new HashSet<string>();
+            var inputAssemblies = inputAssembliesArray.ToList();
+            foreach (var ignore in couldNotOpenErrors.Keys)
+                inputAssemblies.Remove(ignore);
+
             foreach (string assemblyPath in inputAssemblies)
             {
                 string current = assemblyPath.Replace('\\', '/');
@@ -60,7 +66,22 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 whatToDoWhenNotSupportedMethodFound: (unsupportedMethodInfo) =>
                 {
                     outputListOfUnsupportedMethods.Add(unsupportedMethodInfo);
-                });
+                }, couldNotOpenErrors);
+
+            foreach (var ignore in couldNotOpenErrors.Keys)
+                inputAssemblies.Remove(ignore);
+            // ... just in case some input files generated exceptions at load
+            userAssembliesNamesLowercase.Clear();
+            foreach (string assemblyPath in inputAssemblies)
+            {
+                string current = assemblyPath.Replace('\\', '/');
+                current = current.Substring(current.LastIndexOf('/') + 1); //removes everything before assemblyName.dll
+                userAssembliesNamesLowercase.Add(current.ToLowerInvariant());
+            }
+            foreach (string urlNamespace in urlNamespacesThatBelongToUserCode)
+            {
+                userAssembliesNamesLowercase.Add(urlNamespace.ToLowerInvariant());
+            }
 
             //look in C# files:
             Check(assemblies, userAssembliesNamesLowercase, analyzeHelper, listOfFilesToIgnore, "", coreSupportedMethods,
@@ -73,16 +94,25 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
 
         #region checking Xaml
-        public static void CheckXamlFiles(string[] inputAssemblies, HashSet<string> userAssembliesNamesLowercase, CoreSupportedMethodsContainer coreSupportedMethods, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound)
+        public static void CheckXamlFiles(IReadOnlyList<string> inputAssemblies, HashSet<string> userAssembliesNamesLowercase, CoreSupportedMethodsContainer coreSupportedMethods, HashSet<string> attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, 
+                                        HashSet<string> ignoredFiles, string supportedElementsPath, bool addBothPropertyAndEventWhenNotFound, Action<UnsupportedMethodInfo> whatToDoWhenNotSupportedMethodFound, Dictionary<string, string> couldNotOpenErrors)
         {
-            HashSet<string> errorsAlreadyRaised = new HashSet<string>(); // This prevents raising multiple times the same error.
-
             AnalyzeHelper analyzeHelper = new AnalyzeHelper();
             analyzeHelper.Initialize(coreSupportedMethods, supportedElementsPath);
 
             foreach (string assemblyPath in inputAssemblies)
             {
-                var assembly = Assembly.LoadFile(assemblyPath);
+                Assembly assembly = null;
+                try
+                {
+                    assembly = Assembly.LoadFile(assemblyPath);
+                }
+                catch (Exception e)
+                {
+                    if (!couldNotOpenErrors.ContainsKey(assemblyPath))
+                        couldNotOpenErrors.Add(assemblyPath, e.Message);
+                    continue;
+                }
                 var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".g.resources");
                 if (stream != null)
                 {
@@ -95,14 +125,25 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                         var fileNameWithoutPath = fileNameWithRelativePath.Substring(fileNameWithRelativePath.LastIndexOf('\\') + 1); // Removes the path of the file.
                         if (!ignoredFiles.Contains(fileNameWithRelativePath.ToLower()) && !ignoredFiles.Contains(@"*\" + fileNameWithoutPath.ToLower()))
                         {
-                            if (fileInfo.Extension.Equals(".xaml"))
+                            if (fileInfo.Extension.Equals(".xaml", StringComparison.InvariantCultureIgnoreCase) )
                             {
                                 string fileName = resource.Key.ToString();
                                 StreamReader sr = new StreamReader((Stream)resource.Value);
                                 XDocument doc = XDocument.Parse(sr.ReadToEnd(), LoadOptions.SetLineInfo);
                                 //go through all the tags, check if the types and properties are supported:
                                 XNode current = doc.Root;
-                                CheckCurrentXNode(current, userAssembliesNamesLowercase, analyzeHelper, resource.Key.ToString(), assembly.GetName().Name, attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, addBothPropertyAndEventWhenNotFound, whatToDoWhenNotSupportedMethodFound);
+                                CheckCurrentXNode(current, userAssembliesNamesLowercase, analyzeHelper, fileName, assembly.GetName().Name, attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, addBothPropertyAndEventWhenNotFound, whatToDoWhenNotSupportedMethodFound);
+                            }
+                            else if (fileInfo.Extension.Equals(".baml", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                string fileName = resource.Key.ToString();
+                                StreamReader sr = new StreamReader((Stream)resource.Value);
+                                // FIXME i need to properly read .baml files
+                                continue;
+                                XDocument doc = XDocument.Parse(sr.ReadToEnd(), LoadOptions.SetLineInfo);
+                                //go through all the tags, check if the types and properties are supported:
+                                XNode current = doc.Root;
+                                CheckCurrentXNode(current, userAssembliesNamesLowercase, analyzeHelper, fileName, assembly.GetName().Name, attributesToIgnoreInXamlBecauseTheyAreFromBaseClasses, addBothPropertyAndEventWhenNotFound, whatToDoWhenNotSupportedMethodFound);
                             }
                         }
                     }
@@ -541,7 +582,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                 attributeTypeAndPropertyName = attributeValue;
                 AttributeNamespaceName = attribute.Parent.GetDefaultNamespace().NamespaceName;
             }
-            return "{" + AttributeNamespaceName + "}" + attributeTypeAndPropertyName;
+            return "{" + AttributeNamespaceName + "}" + attributeTypeAndPropertyName.Replace(" ", "") ;
         }
 
         private static XName GetSetterPropertyValueAsXName(XAttribute attribute, out bool? isAttachedProperty)
@@ -683,6 +724,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                                                 {
                                                     MethodName = methodAsInitiallyDeclaredInParentType.Name,
                                                     TypeName = methodAsInitiallyDeclaredInParentType.DeclaringType.Name,
+                                                    TypeFullName = methodAsInitiallyDeclaredInParentType.DeclaringType.FullName,
                                                     CallingMethodFullName = "",
                                                     CallingMethodFileNameWithPath = "",
                                                     CallingMethodLineNumber = -1,
@@ -724,6 +766,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                                             {
                                                 MethodName = referencedMethodAndCorrespondingInstruction.MemberReference.Name,
                                                 TypeName = declaringTypeName,
+                                                TypeFullName = declaringType.FullName,
                                                 CallingMethodFullName = callingMethodFullName,
                                                 CallingMethodFileNameWithPath = referencedMethodAndCorrespondingInstruction.CallerFileNameOrEmpty,
                                                 CallingMethodLineNumber = referencedMethodAndCorrespondingInstruction.CallerLineNumberOrZero,
@@ -753,6 +796,7 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
                                 {
                                     MethodName = "",
                                     TypeName = typeReference.Name,
+                                    TypeFullName = typeReference.FullName,
                                     CallingMethodFullName = "",
                                     CallingMethodFileNameWithPath = "",
                                     CallingMethodLineNumber = -1,

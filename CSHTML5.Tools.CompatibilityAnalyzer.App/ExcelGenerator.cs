@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Diagnostics;
+using Microsoft.IO;
 
 namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
@@ -15,7 +16,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             string outputExcelFilePath,
             FeaturesAndEstimationsFileProcessor featuresAndEstimationsFileProcessor,
             SortedDictionary<Tuple<string, string>, HashSet<string>> unsupportedMethodsAndTheirAssemblyToLocationsWhereTheyAreUsed,
-            IEnumerable<string> analyzedDlls)
+            IEnumerable<string> analyzedDlls, 
+            IReadOnlyDictionary<string, string> couldNotOpenErrors)
         {
             ExcelEngine excelEngine = new ExcelEngine();
 
@@ -189,6 +191,12 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
             currentRow += 5;
             string analyzedDllsText = "(Analyzed DLLs: " + string.Join(", ", analyzedDlls) + ")";
             worksheet.Range["A" + currentRow.ToString()].Text = analyzedDllsText;
+            ++currentRow;
+            if (couldNotOpenErrors.Any())
+            {
+                worksheet.Range["A" + currentRow.ToString()].Text = "Could not open assemblies:" ;
+                worksheet.Range["C" + currentRow.ToString()].Text = "Could not open:\r\n" + string.Join("\r\n", couldNotOpenErrors.Select(f => Path.GetFileName(f.Key) + " -> " + f.Value));
+            }
 
             // Saving the workbook to disk in XLSX format
             workbook.SaveAs(outputExcelFilePath);

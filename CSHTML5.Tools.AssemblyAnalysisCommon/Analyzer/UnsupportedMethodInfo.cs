@@ -9,6 +9,9 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 {
     public class UnsupportedMethodInfo
     {
+        public UnsupportedMethodInfo() {
+
+        }
 
         /// <summary>
         /// The name of the unsupported method.
@@ -19,6 +22,8 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
         /// The name of the unsupported type.
         /// </summary>
         public string TypeName { get; set; }
+
+        public string TypeFullName { get; set; }
 
         /// <summary>
         /// The location (full method name) where the unsupported method is used/called.

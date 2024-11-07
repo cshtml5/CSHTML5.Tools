@@ -12,7 +12,6 @@ namespace DotNetForHtml5.PrivateTools.AssemblyCompatibilityAnalyzer
 
         internal static readonly string DefaultPathToFeaturesAndEstimationsFile = "";
 
-        internal static readonly string[] AssembliesToAnalyze = new string[0];
 
         public static readonly HashSet<string> UrlNamespacesThatBelongToUserCode = new HashSet<string>();
 
